@@ -49,6 +49,14 @@
 
         /* ERROR BANNER */
         #errorBanner { display: none; background: var(--red); color: white; padding: 1rem; text-align: center; font-weight: bold; font-size: 0.9rem; }
+
+        /* NOTEBOOK UI STYLES */
+        .wb-settings { display: flex; gap: 15px; margin-bottom: 10px; flex-wrap: wrap; align-items: center; background: var(--bg-dark); padding: 10px; border-radius: 8px; border: 1px solid var(--border); }
+        .wb-select { padding: 6px; border-radius: 5px; background: var(--bg-card); color: var(--text-light); border: 1px solid var(--border); font-size: 0.85rem; outline: none; }
+        .wb-canvas-container { border: 1px solid var(--border); border-radius: 8px; touch-action: none; overflow: hidden; width: 100%; height: 650px; background-color: #1e293b; transition: background-color 0.3s; }
+        .wb-toolbar { display: flex; gap: 12px; margin-top: 10px; justify-content: center; align-items: center; background: var(--bg-dark); padding: 12px; border-radius: 8px; border: 1px solid var(--border); overflow-x: auto; }
+        .pen-btn { width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; flex-shrink: 0; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .pen-btn.active { border-color: var(--gold); transform: translateY(-3px) scale(1.1); box-shadow: 0 4px 8px rgba(245, 158, 11, 0.4); }
     </style>
 </head>
 <body>
@@ -66,7 +74,7 @@
         <button class="tab-btn" onclick="App.switchTab('tab-ca', this)">Current Affairs</button>
         <button class="tab-btn" onclick="App.switchTab('tab-rev', this)">Revision</button>
         <button class="tab-btn" onclick="App.switchTab('tab-tests', this)">Mock Tests</button>
-        <button class="tab-btn" onclick="App.switchTab('tab-scribble', this)">✎ Scribble</button>
+        <button class="tab-btn" onclick="App.switchTab('tab-scribble', this)">✎ Notebook</button>
     </div>
 
     <main class="container">
@@ -204,20 +212,54 @@
         </section>
 
         <section id="tab-scribble" class="view-section">
-            <div class="card">
-                <div class="card-title">Handwritten Notes</div>
-                <div class="input-group" style="margin-bottom: 10px; align-items: center; gap: 8px;">
-                    <button class="btn-primary" onclick="Whiteboard.setColor('#f8fafc')" style="padding: 0.5rem; background: #f8fafc; color: #000;">White</button>
-                    <button class="btn-primary" onclick="Whiteboard.setColor('#f59e0b')" style="padding: 0.5rem; background: #f59e0b; color: #000;">Gold</button>
-                    <button class="btn-primary" onclick="Whiteboard.setColor('#10b981')" style="padding: 0.5rem; background: #10b981; color: #000;">Green</button>
-                    <button class="tab-btn" onclick="Whiteboard.setEraser()">Eraser</button>
+            <div class="card" style="padding-bottom: 0.5rem;">
+                <div class="card-title">Notebook</div>
+                
+                <div class="wb-settings">
+                    <div>
+                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 3px;">Template</label>
+                        <select id="wbTemplate" class="wb-select" onchange="Whiteboard.updatePaper()">
+                            <option value="plain">Plain</option>
+                            <option value="grid" selected>Grid</option>
+                            <option value="rule">Rule</option>
+                            <option value="dot">Dot</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 3px;">Paper Color</label>
+                        <select id="wbPaperColor" class="wb-select" onchange="Whiteboard.updatePaper()">
+                            <option value="#1e293b">Dark Blue (Default)</option>
+                            <option value="#000000">Pure Black</option>
+                            <option value="#ffffff">White</option>
+                            <option value="#fdf6e3">Cream / Yellow</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 3px;">Line Color</label>
+                        <select id="wbLineColor" class="wb-select" onchange="Whiteboard.updatePaper()">
+                            <option value="rgba(255, 255, 255, 0.15)">Light Grey (For Dark Paper)</option>
+                            <option value="rgba(0, 0, 0, 0.15)">Dark Grey (For Light Paper)</option>
+                            <option value="rgba(59, 130, 246, 0.3)">Blue</option>
+                        </select>
+                    </div>
                     <div style="flex-grow: 1;"></div>
-                    <button class="tab-btn" onclick="Whiteboard.clear()">🗑️ Clear</button>
-                    <button class="btn-primary" onclick="Whiteboard.save()">💾 Save</button>
+                    <button class="tab-btn" onclick="Whiteboard.clear()">🗑️ Clear Page</button>
+                    <button class="btn-primary" onclick="Whiteboard.save()">💾 Export Note</button>
                 </div>
                 
-                <div style="border: 1px solid var(--border); border-radius: 8px; background: #1e293b; touch-action: none; overflow: hidden; width: 100%;">
-                    <canvas id="noteCanvas" height="500" style="display: block; width: 100%; cursor: crosshair; touch-action: none;"></canvas>
+                <div id="wbContainer" class="wb-canvas-container">
+                    <canvas id="noteCanvas" style="display: block; width: 100%; height: 100%; cursor: crosshair; touch-action: none;"></canvas>
+                </div>
+
+                <div class="wb-toolbar" id="penToolbar">
+                    <button class="pen-btn active" style="background: #f8fafc;" onclick="Whiteboard.setPen(this, '#f8fafc', 2)"></button>
+                    <button class="pen-btn" style="background: #000000;" onclick="Whiteboard.setPen(this, '#000000', 2)"></button>
+                    <button class="pen-btn" style="background: #3b82f6;" onclick="Whiteboard.setPen(this, '#3b82f6', 2)"></button>
+                    <button class="pen-btn" style="background: #ef4444;" onclick="Whiteboard.setPen(this, '#ef4444', 2)"></button>
+                    <button class="pen-btn" style="background: #10b981;" onclick="Whiteboard.setPen(this, '#10b981', 2)"></button>
+                    <button class="pen-btn" style="background: #f59e0b;" onclick="Whiteboard.setPen(this, '#f59e0b', 3)"></button>
+                    <div style="width: 2px; height: 25px; background: var(--border); margin: 0 5px;"></div>
+                    <button class="tab-btn" id="eraserBtn" onclick="Whiteboard.setEraser(this)" style="padding: 0.4rem 1rem;">Eraser</button>
                 </div>
             </div>
         </section>
@@ -266,9 +308,9 @@
 
     let chartInstance = null;
 
-    // --- WHITEBOARD ENGINE (APPLE PENCIL SUPPORT) ---
+    // --- UPGRADED WHITEBOARD ENGINE ---
     const Whiteboard = {
-        canvas: null, ctx: null, isDrawing: false, color: '#f8fafc', lineWidth: 2, initialized: false,
+        canvas: null, ctx: null, isDrawing: false, color: '#f8fafc', lineWidth: 2, isErasing: false, initialized: false,
         
         init: () => {
             Whiteboard.canvas = document.getElementById('noteCanvas');
@@ -276,6 +318,7 @@
             
             const rect = Whiteboard.canvas.parentElement.getBoundingClientRect();
             Whiteboard.canvas.width = rect.width;
+            Whiteboard.canvas.height = rect.height;
             
             Whiteboard.ctx.lineCap = 'round';
             Whiteboard.ctx.lineJoin = 'round';
@@ -287,6 +330,47 @@
             Whiteboard.canvas.addEventListener('touchstart', (e) => {
                 if (e.touches.length === 1) e.preventDefault();
             }, {passive: false});
+
+            Whiteboard.updatePaper();
+        },
+
+        updatePaper: () => {
+            const template = document.getElementById('wbTemplate').value;
+            const paperColor = document.getElementById('wbPaperColor').value;
+            const lineColor = document.getElementById('wbLineColor').value;
+            const container = document.getElementById('wbContainer');
+
+            container.style.backgroundColor = paperColor;
+
+            if (template === 'grid') {
+                container.style.backgroundImage = `linear-gradient(to right, ${lineColor} 1px, transparent 1px), linear-gradient(to bottom, ${lineColor} 1px, transparent 1px)`;
+                container.style.backgroundSize = '20px 20px';
+            } else if (template === 'rule') {
+                container.style.backgroundImage = `linear-gradient(to bottom, ${lineColor} 1px, transparent 1px)`;
+                container.style.backgroundSize = '100% 30px';
+            } else if (template === 'dot') {
+                container.style.backgroundImage = `radial-gradient(${lineColor} 1px, transparent 1px)`;
+                container.style.backgroundSize = '20px 20px';
+                container.style.backgroundPosition = '0 0';
+            } else {
+                container.style.backgroundImage = 'none';
+            }
+        },
+
+        setPen: (btn, color, width) => {
+            Whiteboard.color = color;
+            Whiteboard.lineWidth = width;
+            Whiteboard.isErasing = false;
+            
+            document.querySelectorAll('.pen-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('eraserBtn').classList.remove('active');
+            btn.classList.add('active');
+        },
+
+        setEraser: (btn) => {
+            Whiteboard.isErasing = true;
+            document.querySelectorAll('.pen-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
         },
         
         startPosition: (e) => {
@@ -305,11 +389,17 @@
             const rect = Whiteboard.canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
-            
             let pressure = e.pressure && e.pressure !== 0.5 ? e.pressure : 1; 
             
-            Whiteboard.ctx.lineWidth = Whiteboard.color === '#1e293b' ? 25 : Whiteboard.lineWidth * (pressure * 2.5); 
-            Whiteboard.ctx.strokeStyle = Whiteboard.color;
+            if (Whiteboard.isErasing) {
+                Whiteboard.ctx.globalCompositeOperation = 'destination-out';
+                Whiteboard.ctx.lineWidth = 25; 
+                Whiteboard.ctx.strokeStyle = "rgba(0,0,0,1)";
+            } else {
+                Whiteboard.ctx.globalCompositeOperation = 'source-over';
+                Whiteboard.ctx.lineWidth = Whiteboard.lineWidth * (pressure * 2.5); 
+                Whiteboard.ctx.strokeStyle = Whiteboard.color;
+            }
             
             Whiteboard.ctx.lineTo(x, y);
             Whiteboard.ctx.stroke();
@@ -317,8 +407,6 @@
             Whiteboard.ctx.moveTo(x, y);
         },
         
-        setColor: (color) => { Whiteboard.color = color; },
-        setEraser: () => { Whiteboard.color = '#1e293b'; },
         clear: () => { Whiteboard.ctx.clearRect(0, 0, Whiteboard.canvas.width, Whiteboard.canvas.height); },
         
         save: () => {
@@ -326,12 +414,35 @@
             tempCanvas.width = Whiteboard.canvas.width;
             tempCanvas.height = Whiteboard.canvas.height;
             const tCtx = tempCanvas.getContext('2d');
-            tCtx.fillStyle = '#1e293b';
+            
+            const template = document.getElementById('wbTemplate').value;
+            const paperColor = document.getElementById('wbPaperColor').value;
+            const lineColor = document.getElementById('wbLineColor').value;
+
+            tCtx.fillStyle = paperColor;
             tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+            
+            tCtx.strokeStyle = lineColor;
+            tCtx.fillStyle = lineColor;
+            tCtx.lineWidth = 1;
+
+            if (template === 'grid') {
+                for(let x=0; x<tempCanvas.width; x+=20) { tCtx.beginPath(); tCtx.moveTo(x,0); tCtx.lineTo(x,tempCanvas.height); tCtx.stroke(); }
+                for(let y=0; y<tempCanvas.height; y+=20) { tCtx.beginPath(); tCtx.moveTo(0,y); tCtx.lineTo(tempCanvas.width,y); tCtx.stroke(); }
+            } else if (template === 'rule') {
+                for(let y=30; y<tempCanvas.height; y+=30) { tCtx.beginPath(); tCtx.moveTo(0,y); tCtx.lineTo(tempCanvas.width,y); tCtx.stroke(); }
+            } else if (template === 'dot') {
+                for(let x=0; x<tempCanvas.width; x+=20) {
+                    for(let y=0; y<tempCanvas.height; y+=20) {
+                        tCtx.beginPath(); tCtx.arc(x, y, 1.5, 0, Math.PI*2); tCtx.fill();
+                    }
+                }
+            }
+            
             tCtx.drawImage(Whiteboard.canvas, 0, 0);
             
             const link = document.createElement('a');
-            link.download = `UPSC_Sketch_${Date.now()}.png`;
+            link.download = `UPSC_Notebook_${Date.now()}.png`;
             link.href = tempCanvas.toDataURL('image/png');
             link.click();
         }
