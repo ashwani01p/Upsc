@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPSC Mission Control - Full Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0f172a; --bg-card: #1e293b; --bg-hover: #334155;
+            --gold: #f59e0b; --text-light: #f8fafc; --text-muted: #94a3b8;
+            --border: #334155; --red: #ef4444; --green: #10b981;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background: var(--bg-dark); color: var(--text-light); display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; }
+
+        /* HEADER & NAVIGATION */
+        .app-header { background: var(--bg-card); padding: 1rem 1.5rem; display: flex; align-items: center; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+        .app-header h1 { font-size: 1.2rem; font-weight: 600; color: var(--gold); }
+        
+        .tab-nav { display: flex; gap: 10px; padding: 1rem; background: var(--bg-dark); overflow-x: auto; border-bottom: 1px solid var(--border); }
+        .tab-btn { padding: 0.6rem 1.2rem; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted); border-radius: 8px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: 0.2s; }
+        .tab-btn.active { background: rgba(245, 158, 11, 0.1); color: var(--gold); border-color: var(--gold); }
+
+        /* MAIN CONTENT AREA */
+        .container { padding: 1.5rem 1rem; max-width: 800px; margin: 0 auto; width: 100%; }
+        .view-section { display: none; }
+        .view-section.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* CARDS & UI ELEMENTS */
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+        .card-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; }
+        
+        .timer-box { text-align: center; border: 1px solid var(--gold); padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; background: rgba(245, 158, 11, 0.05); }
+        .timer-time { font-size: 2.2rem; font-weight: 700; color: var(--text-light); margin-top: 0.5rem; font-variant-numeric: tabular-nums; }
+
+        .input-group { display: flex; gap: 10px; margin-bottom: 1rem; flex-wrap: wrap; }
+        .input-control { flex: 1; min-width: 120px; padding: 0.8rem; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 8px; color: var(--text-light); outline: none; }
+        .input-control:focus { border-color: var(--gold); }
+        .btn-primary { background: var(--gold); color: #000; border: none; padding: 0.8rem 1.5rem; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+        .btn-primary:active { transform: scale(0.98); }
+
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 0.8rem; background: var(--bg-dark); }
+        .badge { background: var(--border); color: var(--text-muted); padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.75rem; margin-right: 8px; font-weight: 600; }
+        .delete-btn { background: transparent; border: none; color: var(--red); font-size: 1.2rem; font-weight: bold; cursor: pointer; padding: 0.2rem 0.5rem; }
+
+        /* ERROR BANNER */
+        #errorBanner { display: none; background: var(--red); color: white; padding: 1rem; text-align: center; font-weight: bold; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+    <div id="errorBanner"></div>
+
+    <header class="app-header">
+        <h1>UPSC Mission Control</h1>
+    </header>
+
+    <div class="tab-nav">
+        <button class="tab-btn active" onclick="App.switchTab('tab-dash', this)">Dashboard</button>
+        <button class="tab-btn" onclick="App.switchTab('tab-syl', this)">Syllabus</button>
+        <button class="tab-btn" onclick="App.switchTab('tab-notes', this)">Notes</button>
+        <button class="tab-btn" onclick="App.switchTab('tab-ca', this)">Current Affairs</button>
+        <button class="tab-btn" onclick="App.switchTab('tab-rev', this)">Revision</button>
+        <button class="tab-btn" onclick="App.switchTab('tab-tests', this)">Mock Tests</button>
+        <button class="tab-btn" onclick="App.switchTab('tab-scribble', this)">✎ Scribble</button>
+    </div>
+
+    <main class="container">
+        
+        <section id="tab-dash" class="view-section active">
+            <div class="timer-box">
+                <div style="color: var(--gold); font-size: 0.85rem; font-weight: 600; letter-spacing: 1px;">TARGET: PRELIMS (MAY 23, 2027)</div>
+                <div class="timer-time" id="countdownDisplay">Initializing...</div>
+            </div>
+
+            <div class="card" style="text-align: center;">
+                <div class="card-title" style="justify-content: center;">Focus Session</div>
+                <div id="pomoDisplay" style="font-size: 3rem; font-weight: 700; color: var(--green); font-variant-numeric: tabular-nums;">25:00</div>
+                <div style="display: flex; gap: 10px; justify-content: center; margin-top: 1rem;">
+                    <button class="btn-primary" id="pomoBtn" onclick="App.togglePomo()">Start Focus</button>
+                    <button class="tab-btn" onclick="App.resetPomo()">Reset</button>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-bottom: 1.5rem;">
+                <button class="tab-btn" onclick="App.exportData()">💾 Backup Data</button>
+                <label class="tab-btn" style="cursor: pointer;">
+                    📂 Restore Data
+                    <input type="file" accept=".json" style="display: none;" onchange="App.importData(event)">
+                </label>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Daily Missions <span id="taskCounter" style="color: var(--gold);">0/0</span></div>
+                <div class="input-group">
+                    <select id="examSelect" class="input-control" onchange="App.updateSubjects()" style="flex: 0.5;">
+                        <option value="Prelims">Prelims</option>
+                        <option value="Mains">Mains</option>
+                    </select>
+                    <select id="subjectSelect" class="input-control" style="flex: 0.5;"></select>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="taskInput" class="input-control" placeholder="What topic are you studying today?">
+                    <button class="btn-primary" onclick="App.addTask()">Add Task</button>
+                </div>
+                <div id="taskList"></div>
+            </div>
+
+            <div class="card" id="chartCard">
+                <div class="card-title">Subject Focus</div>
+                <div style="position: relative; height: 220px; width: 100%;"><canvas id="taskChart"></canvas></div>
+            </div>
+        </section>
+
+        <section id="tab-syl" class="view-section">
+            <div class="card">
+                <div class="card-title">Syllabus Completion <span id="sylProgress" style="color: var(--gold);">0%</span></div>
+                
+                <div style="margin-bottom: 1rem; color: var(--gold); font-weight: 600;">Prelims Specific</div>
+                <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="p1" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> Current Events of National & International Importance</label></div>
+                <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="p2" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> CSAT - Comprehension, Reasoning & Numeracy</label></div>
+
+                <div style="margin-top: 1.5rem; margin-bottom: 1rem; color: var(--gold); font-weight: 600;">GS Paper 1</div>
+                <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="s1" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> Art, Architecture & Culture</label></div>
+                <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="s2" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> Modern Indian & World History</label></div>
+                <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="s3" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> Indian & World Geography</label></div>
+                <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="s3a" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> Indian Society & Social Issues</label></div>
+                
+                <div style="margin-top: 1.5rem; margin-bottom: 1rem; color: var(--gold); font-weight: 600;">GS Paper 2</div>
+                <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="s4" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> Indian Polity & Constitution</label></div>
+                <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="s4a" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> Governance & Social Justice (e.g., Poverty Reduction Schemes)</label></div>
+                <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="s5" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> International Relations</label></div>
+
+                <div style="margin-top: 1.5rem; margin-bottom: 1rem; color: var(--gold); font-weight: 600;">GS Paper 3</div>
+                <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="s6" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> Indian Economy & Agriculture</label></div>
+                <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="s7" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> Science & Technology</label></div>
+                <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="s8" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> Environment, Biodiversity & Disaster Mgmt</label></div>
+                <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="s9" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> Internal Security</label></div>
+
+                <div style="margin-top: 1.5rem; margin-bottom: 1rem; color: var(--gold); font-weight: 600;">GS Paper 4</div>
+                <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="s10" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> Ethics & Human Interface</label></div>
+                <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="s11" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> Aptitude & Foundational Values</label></div>
+                <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="s12" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> Emotional Intelligence & Case Studies</label></div>
+            </div>
+        </section>
+
+        <section id="tab-notes" class="view-section">
+            <div class="card">
+                <div class="card-title">Add Note</div>
+                <div class="input-group">
+                    <input type="text" id="noteTitle" class="input-control" placeholder="Note Title / Topic">
+                </div>
+                <div class="input-group">
+                    <textarea id="noteContent" class="input-control" placeholder="Write your notes here..." style="min-height: 120px; resize: vertical;"></textarea>
+                </div>
+                <button class="btn-primary" onclick="App.addNote()">Save Note</button>
+            </div>
+            <div id="noteList"></div>
+        </section>
+
+        <section id="tab-ca" class="view-section">
+            <div class="card">
+                <div class="card-title">Log News Event</div>
+                <div class="input-group">
+                    <input type="text" id="caTitle" class="input-control" placeholder="Headline" style="flex: 0.7;">
+                    <select id="caPaper" class="input-control" style="flex: 0.3;">
+                        <option>Pre</option><option>GS1</option><option>GS2</option><option>GS3</option><option>GS4</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <textarea id="caContent" class="input-control" placeholder="Summary / Key points..." style="min-height: 80px; resize: vertical;"></textarea>
+                </div>
+                <button class="btn-primary" onclick="App.addCA()">Save Record</button>
+            </div>
+            <div id="caList"></div>
+        </section>
+
+        <section id="tab-rev" class="view-section">
+            <div class="card">
+                <div class="card-title">Schedule Revision</div>
+                <div class="input-group">
+                    <input type="text" id="revTopic" class="input-control" placeholder="Topic to revise...">
+                    <input type="date" id="revDate" class="input-control">
+                    <button class="btn-primary" onclick="App.addRev()">Schedule</button>
+                </div>
+            </div>
+            <div id="revList"></div>
+        </section>
+
+        <section id="tab-tests" class="view-section">
+            <div class="card">
+                <div class="card-title">Log Mock Test</div>
+                <div class="input-group">
+                    <input type="text" id="testName" class="input-control" placeholder="Test Name (e.g., Vision GS 1)">
+                    <input type="number" id="testScore" class="input-control" placeholder="Score" style="flex: 0.4;">
+                    <button class="btn-primary" onclick="App.addTest()">Log Score</button>
+                </div>
+            </div>
+            <div id="testList"></div>
+        </section>
+
+        <section id="tab-scribble" class="view-section">
+            <div class="card">
+                <div class="card-title">Handwritten Notes</div>
+                <div class="input-group" style="margin-bottom: 10px; align-items: center; gap: 8px;">
+                    <button class="btn-primary" onclick="Whiteboard.setColor('#f8fafc')" style="padding: 0.5rem; background: #f8fafc; color: #000;">White</button>
+                    <button class="btn-primary" onclick="Whiteboard.setColor('#f59e0b')" style="padding: 0.5rem; background: #f59e0b; color: #000;">Gold</button>
+                    <button class="btn-primary" onclick="Whiteboard.setColor('#10b981')" style="padding: 0.5rem; background: #10b981; color: #000;">Green</button>
+                    <button class="tab-btn" onclick="Whiteboard.setEraser()">Eraser</button>
+                    <div style="flex-grow: 1;"></div>
+                    <button class="tab-btn" onclick="Whiteboard.clear()">🗑️ Clear</button>
+                    <button class="btn-primary" onclick="Whiteboard.save()">💾 Save</button>
+                </div>
+                
+                <div style="border: 1px solid var(--border); border-radius: 8px; background: #1e293b; touch-action: none; overflow: hidden; width: 100%;">
+                    <canvas id="noteCanvas" height="500" style="display: block; width: 100%; cursor: crosshair; touch-action: none;"></canvas>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+<script>
+    // 1. IN-MEMORY FALLBACK SYSTEM
+    let fallbackMemory = {};
+    const DB = {
+        get: (key, def) => {
+            try {
+                let val = localStorage.getItem(key);
+                if (val) return JSON.parse(val);
+                return fallbackMemory[key] || def;
+            } catch (e) {
+                return fallbackMemory[key] || def;
+            }
+        },
+        set: (key, val) => {
+            try {
+                localStorage.setItem(key, JSON.stringify(val));
+            } catch (e) {
+                fallbackMemory[key] = val; 
+                document.getElementById('errorBanner').style.display = 'block';
+                document.getElementById('errorBanner').innerText = 'Warning: Local Storage is blocked by your viewer. Data will reset when closed. Open in Chrome to save permanently.';
+            }
+        }
+    };
+
+    // 2. STATE MANAGEMENT
+    const State = {
+        tasks: DB.get('up_tasks', []),
+        notes: DB.get('up_notes', []),
+        tests: DB.get('up_tests', []),
+        syl: DB.get('up_syl', {}),
+        cas: DB.get('up_ca', []),
+        revs: DB.get('up_rev', [])
+    };
+
+    // 3. DROPDOWN DATA
+    const Subjects = {
+        Prelims: ["History", "Polity", "Economy", "Geography", "Environment", "Science", "CSAT"],
+        Mains: ["GS 1", "GS 2", "GS 3", "GS 4", "Optional"]
+    };
+
+    let chartInstance = null;
+
+    // --- WHITEBOARD ENGINE (APPLE PENCIL SUPPORT) ---
+    const Whiteboard = {
+        canvas: null, ctx: null, isDrawing: false, color: '#f8fafc', lineWidth: 2, initialized: false,
+        
+        init: () => {
+            Whiteboard.canvas = document.getElementById('noteCanvas');
+            Whiteboard.ctx = Whiteboard.canvas.getContext('2d');
+            
+            const rect = Whiteboard.canvas.parentElement.getBoundingClientRect();
+            Whiteboard.canvas.width = rect.width;
+            
+            Whiteboard.ctx.lineCap = 'round';
+            Whiteboard.ctx.lineJoin = 'round';
+            
+            Whiteboard.canvas.addEventListener('pointerdown', Whiteboard.startPosition);
+            Whiteboard.canvas.addEventListener('pointermove', Whiteboard.draw);
+            window.addEventListener('pointerup', Whiteboard.endPosition);
+            
+            Whiteboard.canvas.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) e.preventDefault();
+            }, {passive: false});
+        },
+        
+        startPosition: (e) => {
+            Whiteboard.isDrawing = true;
+            Whiteboard.draw(e);
+        },
+        
+        endPosition: () => {
+            Whiteboard.isDrawing = false;
+            Whiteboard.ctx.beginPath(); 
+        },
+        
+        draw: (e) => {
+            if (!Whiteboard.isDrawing) return;
+            
+            const rect = Whiteboard.canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            let pressure = e.pressure && e.pressure !== 0.5 ? e.pressure : 1; 
+            
+            Whiteboard.ctx.lineWidth = Whiteboard.color === '#1e293b' ? 25 : Whiteboard.lineWidth * (pressure * 2.5); 
+            Whiteboard.ctx.strokeStyle = Whiteboard.color;
+            
+            Whiteboard.ctx.lineTo(x, y);
+            Whiteboard.ctx.stroke();
+            Whiteboard.ctx.beginPath();
+            Whiteboard.ctx.moveTo(x, y);
+        },
+        
+        setColor: (color) => { Whiteboard.color = color; },
+        setEraser: () => { Whiteboard.color = '#1e293b'; },
+        clear: () => { Whiteboard.ctx.clearRect(0, 0, Whiteboard.canvas.width, Whiteboard.canvas.height); },
+        
+        save: () => {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = Whiteboard.canvas.width;
+            tempCanvas.height = Whiteboard.canvas.height;
+            const tCtx = tempCanvas.getContext('2d');
+            tCtx.fillStyle = '#1e293b';
+            tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+            tCtx.drawImage(Whiteboard.canvas, 0, 0);
+            
+            const link = document.createElement('a');
+            link.download = `UPSC_Sketch_${Date.now()}.png`;
+            link.href = tempCanvas.toDataURL('image/png');
+            link.click();
+        }
+    };
+
+    // 4. CORE APPLICATION LOGIC
+    const App = {
+        
+        switchTab: (tabId, btnElement) => {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            btnElement.classList.add('active');
+            
+            if(tabId === 'tab-dash') App.renderChart();
+            
+            if(tabId === 'tab-scribble' && !Whiteboard.initialized) {
+                setTimeout(() => { Whiteboard.init(); }, 50);
+                Whiteboard.initialized = true;
+            }
+        },
+
+        updateSubjects: () => {
+            const exam = document.getElementById('examSelect').value;
+            const subSelect = document.getElementById('subjectSelect');
+            subSelect.innerHTML = Subjects[exam].map(s => `<option value="${s}">${s}</option>`).join('');
+        },
+
+        startTimer: () => {
+            const target = new Date(2027, 4, 23).getTime(); 
+            const update = () => {
+                const diff = target - new Date().getTime();
+                if (diff < 0) { document.getElementById('countdownDisplay').innerText = "IT'S EXAM DAY"; return; }
+                const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
+                const m = Math.floor((diff / 1000 / 60) % 60);
+                document.getElementById('countdownDisplay').innerText = `${d}d ${h}h ${m}m`;
+            };
+            update();
+            setInterval(update, 60000);
+        },
+
+        // --- TASKS ---
+        addTask: () => {
+            const input = document.getElementById('taskInput');
+            const subject = document.getElementById('subjectSelect').value;
+            if (!input.value.trim()) return;
+
+            State.tasks.push({ id: Date.now(), text: input.value.trim(), subject: subject, done: false });
+            DB.set('up_tasks', State.tasks);
+            input.value = '';
+            App.renderTasks();
+        },
+        toggleTask: (id) => {
+            const task = State.tasks.find(t => t.id === id);
+            if (task) { task.done = !task.done; DB.set('up_tasks', State.tasks); App.renderTasks(); }
+        },
+        deleteTask: (id) => {
+            State.tasks = State.tasks.filter(t => t.id !== id);
+            DB.set('up_tasks', State.tasks);
+            App.renderTasks();
+        },
+        renderTasks: () => {
+            const list = document.getElementById('taskList');
+            list.innerHTML = State.tasks.map(t => `
+                <div class="list-item" style="opacity: ${t.done ? '0.5' : '1'};">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" style="width:18px; height:18px;" ${t.done ? 'checked' : ''} onchange="App.toggleTask(${t.id})">
+                        <span style="${t.done ? 'text-decoration:line-through' : ''}"><span class="badge">${t.subject}</span> ${t.text}</span>
+                    </div>
+                    <button class="delete-btn" onclick="App.deleteTask(${t.id})">✕</button>
+                </div>
+            `).join('');
+
+            const completed = State.tasks.filter(t => t.done).length;
+            document.getElementById('taskCounter').innerText = `${completed}/${State.tasks.length}`;
+            App.renderChart();
+        },
+
+        // --- CHARTS ---
+        renderChart: () => {
+            if (typeof Chart === 'undefined') {
+                document.getElementById('chartCard').style.display = 'none';
+                return;
+            }
+            const ctx = document.getElementById('taskChart');
+            if (!ctx || window.getComputedStyle(ctx.parentElement.parentElement).display === 'none') return;
+            if (chartInstance) chartInstance.destroy();
+
+            const counts = {};
+            State.tasks.forEach(t => counts[t.subject] = (counts[t.subject] || 0) + 1);
+
+            chartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(counts).length ? Object.keys(counts) : ['No Tasks'],
+                    datasets: [{
+                        data: Object.keys(counts).length ? Object.values(counts) : [1],
+                        backgroundColor: ['#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ef4444', '#1e293b'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#f8fafc' } } } }
+            });
+        },
+
+        // --- SYLLABUS ---
+        saveSyl: () => {
+            const boxes = document.querySelectorAll('.syl-cb');
+            let checked = 0;
+            boxes.forEach(b => {
+                State.syl[b.id] = b.checked;
+                if (b.checked) checked++;
+            });
+            DB.set('up_syl', State.syl);
+            const pct = boxes.length ? Math.round((checked / boxes.length) * 100) : 0;
+            document.getElementById('sylProgress').innerText = `${pct}%`;
+        },
+        loadSyl: () => {
+            const boxes = document.querySelectorAll('.syl-cb');
+            let checked = 0;
+            boxes.forEach(b => {
+                if (State.syl[b.id]) {
+                    b.checked = true;
+                    checked++;
+                }
+            });
+            const pct = boxes.length ? Math.round((checked / boxes.length) * 100) : 0;
+            document.getElementById('sylProgress').innerText = `${pct}%`;
+        },
+
+        // --- NOTES ---
+        addNote: () => {
+            const title = document.getElementById('noteTitle').value.trim();
+            const content = document.getElementById('noteContent').value.trim();
+            if (!title || !content) return;
+
+            State.notes.unshift({ id: Date.now(), title, content, date: new Date().toLocaleDateString() });
+            DB.set('up_notes', State.notes);
+            
+            document.getElementById('noteTitle').value = '';
+            document.getElementById('noteContent').value = '';
+            App.renderNotes();
+        },
+        deleteNote: (id) => {
+            State.notes = State.notes.filter(n => n.id !== id);
+            DB.set('up_notes', State.notes);
+            App.renderNotes();
+        },
+        renderNotes: () => {
+            document.getElementById('noteList').innerHTML = State.notes.map(n => `
+                <div class="card" style="padding: 1rem;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom: 5px;">
+                        <strong style="color:var(--gold);">${n.title}</strong>
+                        <button class="delete-btn" onclick="App.deleteNote(${n.id})">✕</button>
+                    </div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:10px;">${n.date}</div>
+                    <div style="font-size:0.95rem; white-space:pre-wrap;">${n.content}</div>
+                </div>
+            `).join('');
+        },
+
+        // --- CURRENT AFFAIRS ---
+        addCA: () => {
+            const title = document.getElementById('caTitle').value.trim();
+            const paper = document.getElementById('caPaper').value;
+            const content = document.getElementById('caContent').value.trim();
+            if (!title) return;
+
+            State.cas.unshift({ id: Date.now(), title, paper, content, date: new Date().toLocaleDateString() });
+            DB.set('up_ca', State.cas);
+            
+            document.getElementById('caTitle').value = '';
+            document.getElementById('caContent').value = '';
+            App.renderCA();
+        },
+        deleteCA: (id) => {
+            State.cas = State.cas.filter(c => c.id !== id);
+            DB.set('up_ca', State.cas);
+            App.renderCA();
+        },
+        renderCA: () => {
+            document.getElementById('caList').innerHTML = State.cas.map(c => `
+                <div class="card" style="padding: 1rem;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom: 5px;">
+                        <strong>${c.title}</strong>
+                        <button class="delete-btn" onclick="App.deleteCA(${c.id})">✕</button>
+                    </div>
+                    <div style="margin-bottom:10px;"><span class="badge">${c.paper}</span> <span style="font-size:0.75rem; color:var(--text-muted);">${c.date}</span></div>
+                    <div style="font-size:0.95rem; white-space:pre-wrap;">${c.content}</div>
+                </div>
+            `).join('');
+        },
+
+        // --- REVISION ---
+        addRev: () => {
+            const topic = document.getElementById('revTopic').value.trim();
+            const date = document.getElementById('revDate').value;
+            if (!topic || !date) return;
+
+            State.revs.push({ id: Date.now(), topic, date, done: false });
+            State.revs.sort((a, b) => new Date(a.date) - new Date(b.date)); 
+            DB.set('up_rev', State.revs);
+            
+            document.getElementById('revTopic').value = '';
+            document.getElementById('revDate').value = '';
+            App.renderRevs();
+        },
+        toggleRev: (id) => {
+            const rev = State.revs.find(r => r.id === id);
+            if (rev) { rev.done = !rev.done; DB.set('up_rev', State.revs); App.renderRevs(); }
+        },
+        deleteRev: (id) => {
+            State.revs = State.revs.filter(r => r.id !== id);
+            DB.set('up_rev', State.revs);
+            App.renderRevs();
+        },
+        renderRevs: () => {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('revList').innerHTML = State.revs.map(r => {
+                const isDue = r.date <= today && !r.done;
+                return `
+                    <div class="list-item" style="border-left: 4px solid ${isDue ? 'var(--red)' : 'transparent'}; opacity: ${r.done ? '0.5' : '1'};">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" style="width:18px; height:18px;" ${r.done ? 'checked' : ''} onchange="App.toggleRev(${r.id})">
+                            <div>
+                                <div style="${r.done ? 'text-decoration:line-through' : ''}">${r.topic}</div>
+                                <div style="font-size:0.75rem; color:${isDue ? 'var(--red)' : 'var(--text-muted)'}; font-weight: 600;">${r.date} ${isDue ? '(DUE)' : ''}</div>
+                            </div>
+                        </div>
+                        <button class="delete-btn" onclick="App.deleteRev(${r.id})">✕</button>
+                    </div>
+                `;
+            }).join('');
+        },
+
+        // --- TESTS ---
+        addTest: () => {
+            const name = document.getElementById('testName').value.trim();
+            const score = document.getElementById('testScore').value;
+            if (!name || !score) return;
+
+            State.tests.push({ id: Date.now(), name, score: Number(score), date: new Date().toLocaleDateString() });
+            DB.set('up_tests', State.tests);
+            
+            document.getElementById('testName').value = '';
+            document.getElementById('testScore').value = '';
+            App.renderTests();
+        },
+        deleteTest: (id) => {
+            State.tests = State.tests.filter(t => t.id !== id);
+            DB.set('up_tests', State.tests);
+            App.renderTests();
+        },
+        renderTests: () => {
+            document.getElementById('testList').innerHTML = State.tests.slice().reverse().map(t => `
+                <div class="list-item">
+                    <div>
+                        <strong>${t.name}</strong><br>
+                        <span style="font-size:0.75rem; color:var(--text-muted);">${t.date}</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:15px;">
+                        <span style="font-size: 1.5rem; font-weight:700; color:var(--green);">${t.score}</span>
+                        <button class="delete-btn" onclick="App.deleteTest(${t.id})">✕</button>
+                    </div>
+                </div>
+            `).join('');
+        },
+
+        // --- POMODORO TIMER ---
+        pomoInterval: null,
+        pomoTime: 1500, // 25 minutes in seconds
+        pomoRunning: false,
+        
+        togglePomo: () => {
+            const btn = document.getElementById('pomoBtn');
+            if (App.pomoRunning) {
+                clearInterval(App.pomoInterval);
+                btn.innerText = "Resume Focus";
+                btn.style.background = "var(--gold)";
+            } else {
+                btn.innerText = "Pause Timer";
+                btn.style.background = "var(--bg-hover)";
+                btn.style.color = "var(--text-light)";
+                App.pomoInterval = setInterval(() => {
+                    if (App.pomoTime <= 0) {
+                        clearInterval(App.pomoInterval);
+                        alert("Session complete! Take a 5-minute break.");
+                        App.resetPomo();
+                        return;
+                    }
+                    App.pomoTime--;
+                    const m = String(Math.floor(App.pomoTime / 60)).padStart(2, '0');
+                    const s = String(App.pomoTime % 60).padStart(2, '0');
+                    document.getElementById('pomoDisplay').innerText = `${m}:${s}`;
+                }, 1000);
+            }
+            App.pomoRunning = !App.pomoRunning;
+        },
+        
+        resetPomo: () => {
+            clearInterval(App.pomoInterval);
+            App.pomoRunning = false;
+            App.pomoTime = 1500;
+            document.getElementById('pomoDisplay').innerText = "25:00";
+            const btn = document.getElementById('pomoBtn');
+            btn.innerText = "Start Focus";
+            btn.style.background = "var(--gold)";
+            btn.style.color = "#000";
+        },
+
+        // --- DATA BACKUP & RESTORE ---
+        exportData: () => {
+            const exportObj = {
+                tasks: State.tasks, notes: State.notes, tests: State.tests, 
+                syl: State.syl, cas: State.cas, revs: State.revs
+            };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href",     dataStr);
+            downloadAnchorNode.setAttribute("download", `UPSC_Backup_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(downloadAnchorNode); 
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        },
+        
+        importData: (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if(imported.tasks) DB.set('up_tasks', imported.tasks);
+                    if(imported.notes) DB.set('up_notes', imported.notes);
+                    if(imported.tests) DB.set('up_tests', imported.tests);
+                    if(imported.syl) DB.set('up_syl', imported.syl);
+                    if(imported.cas) DB.set('up_ca', imported.cas);
+                    if(imported.revs) DB.set('up_rev', imported.revs);
+                    
+                    alert("Data restored successfully! The page will now reload to apply your data.");
+                    location.reload();
+                } catch (error) {
+                    alert("Error reading file. Please make sure it is a valid backup JSON.");
+                }
+            };
+            reader.readAsText(file);
+        },
+
+        // --- BOOTLOADER ---
+        boot: () => {
+            App.updateSubjects();
+            App.startTimer();
+            App.renderTasks();
+            App.loadSyl();
+            App.renderNotes();
+            App.renderCA();
+            App.renderRevs();
+            App.renderTests();
+        }
+    };
+
+    // 5. INITIALIZATION
+    try { App.boot(); } catch(e) {}
+    document.addEventListener('DOMContentLoaded', () => { try { App.boot(); } catch(e) {} });
+
+</script>
+</body>
+</html>
