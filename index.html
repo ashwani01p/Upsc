@@ -17,7 +17,7 @@
         body { background: var(--bg-dark); color: var(--text-light); display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; }
 
         /* HEADER & NAVIGATION */
-        .app-header { background: var(--bg-card); padding: 1rem 1.5rem; display: flex; align-items: center; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+        .app-header { background: var(--bg-card); padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
         .app-header h1 { font-size: 1.2rem; font-weight: 600; color: var(--gold); }
         
         .tab-nav { display: flex; gap: 10px; padding: 1rem; background: var(--bg-dark); overflow-x: auto; border-bottom: 1px solid var(--border); }
@@ -65,6 +65,9 @@
 
     <header class="app-header">
         <h1>UPSC Mission Control</h1>
+        <div id="authSection">
+            <button class="btn-primary" onclick="if(window.GoogleAuth) window.GoogleAuth.login()" style="padding: 0.5rem 1rem; font-size: 0.9rem;">Sign in to Sync</button>
+        </div>
     </header>
 
     <div class="tab-nav">
@@ -140,7 +143,7 @@
                 
                 <div style="margin-top: 1.5rem; margin-bottom: 1rem; color: var(--gold); font-weight: 600;">GS Paper 2</div>
                 <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="s4" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> Indian Polity & Constitution</label></div>
-                <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="s4a" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> Governance & Social Justice (e.g., Poverty Reduction Schemes)</label></div>
+                <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="s4a" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> Governance & Social Justice</label></div>
                 <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="s5" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> International Relations</label></div>
 
                 <div style="margin-top: 1.5rem; margin-bottom: 1rem; color: var(--gold); font-weight: 600;">GS Paper 3</div>
@@ -266,41 +269,107 @@
 
     </main>
 
-<script>
-    // 1. IN-MEMORY FALLBACK SYSTEM
-    let fallbackMemory = {};
-    const DB = {
-        get: (key, def) => {
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCSUbwjYdxdGPUIjN_VYvcCcc6jLqflF5c",
+      authDomain: "upsc-web-1daf2.firebaseapp.com",
+      projectId: "upsc-web-1daf2",
+      storageBucket: "upsc-web-1daf2.firebasestorage.app",
+      messagingSenderId: "986435590514",
+      appId: "1:986435590514:web:784d4074a43b042890e5eb",
+      measurementId: "G-BRYJE09T9E"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
+
+    window.GoogleAuth = {
+        isLoggedIn: false,
+        login: async () => {
             try {
-                let val = localStorage.getItem(key);
-                if (val) return JSON.parse(val);
-                return fallbackMemory[key] || def;
-            } catch (e) {
-                return fallbackMemory[key] || def;
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                console.error("Login failed", error);
+                alert("Login failed. Check browser console for details.");
             }
         },
-        set: (key, val) => {
+        logout: () => { signOut(auth); },
+        syncToCloud: async () => {
+            if (!auth.currentUser) return;
             try {
-                localStorage.setItem(key, JSON.stringify(val));
+                await setDoc(doc(db, "users", auth.currentUser.uid), {
+                    tasks: State.tasks, notes: State.notes, tests: State.tests,
+                    syl: State.syl, cas: State.cas, revs: State.revs,
+                    lastUpdated: new Date().toISOString()
+                });
+                console.log("Auto-synced to cloud!");
             } catch (e) {
-                fallbackMemory[key] = val; 
-                document.getElementById('errorBanner').style.display = 'block';
-                document.getElementById('errorBanner').innerText = 'Warning: Local Storage is blocked by your viewer. Data will reset when closed. Open in Chrome to save permanently.';
+                console.error("Cloud sync failed:", e);
             }
         }
     };
 
-    // 2. STATE MANAGEMENT
-    const State = {
-        tasks: DB.get('up_tasks', []),
-        notes: DB.get('up_notes', []),
-        tests: DB.get('up_tests', []),
-        syl: DB.get('up_syl', {}),
-        cas: DB.get('up_ca', []),
-        revs: DB.get('up_rev', [])
+    onAuthStateChanged(auth, async (user) => {
+        const authSection = document.getElementById('authSection');
+        if (user) {
+            window.GoogleAuth.isLoggedIn = true;
+            authSection.innerHTML = `
+                <span style="font-size: 0.8rem; margin-right: 10px; color: var(--text-muted);">👤 ${user.displayName}</span>
+                <button class="tab-btn" onclick="GoogleAuth.logout()" style="padding: 0.4rem 0.8rem;">Logout</button>
+            `;
+            
+            // Pull data from cloud on login
+            const docSnap = await getDoc(doc(db, "users", user.uid));
+            if (docSnap.exists()) {
+                const c = docSnap.data();
+                if(c.tasks) DB.set('up_tasks', c.tasks);
+                if(c.notes) DB.set('up_notes', c.notes);
+                if(c.tests) DB.set('up_tests', c.tests);
+                if(c.syl) DB.set('up_syl', c.syl);
+                if(c.cas) DB.set('up_ca', c.cas);
+                if(c.revs) DB.set('up_rev', c.revs);
+                
+                // Update local state and refresh UI
+                State.tasks = c.tasks || []; State.notes = c.notes || []; State.tests = c.tests || [];
+                State.syl = c.syl || {}; State.cas = c.cas || []; State.revs = c.revs || [];
+                App.boot(); 
+            }
+        } else {
+            window.GoogleAuth.isLoggedIn = false;
+            authSection.innerHTML = `<button class="btn-primary" onclick="if(window.GoogleAuth) window.GoogleAuth.login()" style="padding: 0.5rem 1rem; font-size: 0.9rem;">Sign in to Sync</button>`;
+        }
+    });
+</script>
+
+<script>
+    // 1. DATABASE WRAPPER (Now triggers cloud sync automatically!)
+    let fallbackMemory = {};
+    const DB = {
+        get: (key, def) => {
+            try { let val = localStorage.getItem(key); return val ? JSON.parse(val) : (fallbackMemory[key] || def); } 
+            catch (e) { return fallbackMemory[key] || def; }
+        },
+        set: (key, val) => {
+            try { localStorage.setItem(key, JSON.stringify(val)); } 
+            catch (e) { fallbackMemory[key] = val; }
+            // Auto-trigger cloud sync if user is logged in
+            if (window.GoogleAuth && window.GoogleAuth.isLoggedIn) {
+                window.GoogleAuth.syncToCloud();
+            }
+        }
     };
 
-    // 3. DROPDOWN DATA
+    const State = {
+        tasks: DB.get('up_tasks', []), notes: DB.get('up_notes', []), tests: DB.get('up_tests', []),
+        syl: DB.get('up_syl', {}), cas: DB.get('up_ca', []), revs: DB.get('up_rev', [])
+    };
+
     const Subjects = {
         Prelims: ["History", "Polity", "Economy", "Geography", "Environment", "Science", "CSAT"],
         Mains: ["GS 1", "GS 2", "GS 3", "GS 4", "Optional"]
@@ -308,7 +377,7 @@
 
     let chartInstance = null;
 
-    // --- UPGRADED WHITEBOARD ENGINE ---
+    // --- WHITEBOARD ENGINE ---
     const Whiteboard = {
         canvas: null, ctx: null, isDrawing: false, color: '#f8fafc', lineWidth: 2, isErasing: false, initialized: false,
         
@@ -358,10 +427,7 @@
         },
 
         setPen: (btn, color, width) => {
-            Whiteboard.color = color;
-            Whiteboard.lineWidth = width;
-            Whiteboard.isErasing = false;
-            
+            Whiteboard.color = color; Whiteboard.lineWidth = width; Whiteboard.isErasing = false;
             document.querySelectorAll('.pen-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('eraserBtn').classList.remove('active');
             btn.classList.add('active');
@@ -373,22 +439,13 @@
             btn.classList.add('active');
         },
         
-        startPosition: (e) => {
-            Whiteboard.isDrawing = true;
-            Whiteboard.draw(e);
-        },
-        
-        endPosition: () => {
-            Whiteboard.isDrawing = false;
-            Whiteboard.ctx.beginPath(); 
-        },
+        startPosition: (e) => { Whiteboard.isDrawing = true; Whiteboard.draw(e); },
+        endPosition: () => { Whiteboard.isDrawing = false; Whiteboard.ctx.beginPath(); },
         
         draw: (e) => {
             if (!Whiteboard.isDrawing) return;
-            
             const rect = Whiteboard.canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
+            const x = e.clientX - rect.left; const y = e.clientY - rect.top;
             let pressure = e.pressure && e.pressure !== 0.5 ? e.pressure : 1; 
             
             if (Whiteboard.isErasing) {
@@ -411,20 +468,15 @@
         
         save: () => {
             const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = Whiteboard.canvas.width;
-            tempCanvas.height = Whiteboard.canvas.height;
+            tempCanvas.width = Whiteboard.canvas.width; tempCanvas.height = Whiteboard.canvas.height;
             const tCtx = tempCanvas.getContext('2d');
             
             const template = document.getElementById('wbTemplate').value;
             const paperColor = document.getElementById('wbPaperColor').value;
             const lineColor = document.getElementById('wbLineColor').value;
 
-            tCtx.fillStyle = paperColor;
-            tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-            
-            tCtx.strokeStyle = lineColor;
-            tCtx.fillStyle = lineColor;
-            tCtx.lineWidth = 1;
+            tCtx.fillStyle = paperColor; tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+            tCtx.strokeStyle = lineColor; tCtx.fillStyle = lineColor; tCtx.lineWidth = 1;
 
             if (template === 'grid') {
                 for(let x=0; x<tempCanvas.width; x+=20) { tCtx.beginPath(); tCtx.moveTo(x,0); tCtx.lineTo(x,tempCanvas.height); tCtx.stroke(); }
@@ -433,14 +485,11 @@
                 for(let y=30; y<tempCanvas.height; y+=30) { tCtx.beginPath(); tCtx.moveTo(0,y); tCtx.lineTo(tempCanvas.width,y); tCtx.stroke(); }
             } else if (template === 'dot') {
                 for(let x=0; x<tempCanvas.width; x+=20) {
-                    for(let y=0; y<tempCanvas.height; y+=20) {
-                        tCtx.beginPath(); tCtx.arc(x, y, 1.5, 0, Math.PI*2); tCtx.fill();
-                    }
+                    for(let y=0; y<tempCanvas.height; y+=20) { tCtx.beginPath(); tCtx.arc(x, y, 1.5, 0, Math.PI*2); tCtx.fill(); }
                 }
             }
             
             tCtx.drawImage(Whiteboard.canvas, 0, 0);
-            
             const link = document.createElement('a');
             link.download = `UPSC_Notebook_${Date.now()}.png`;
             link.href = tempCanvas.toDataURL('image/png');
@@ -448,9 +497,8 @@
         }
     };
 
-    // 4. CORE APPLICATION LOGIC
+    // --- MAIN APP LOGIC ---
     const App = {
-        
         switchTab: (tabId, btnElement) => {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
@@ -458,7 +506,6 @@
             btnElement.classList.add('active');
             
             if(tabId === 'tab-dash') App.renderChart();
-            
             if(tabId === 'tab-scribble' && !Whiteboard.initialized) {
                 setTimeout(() => { Whiteboard.init(); }, 50);
                 Whiteboard.initialized = true;
@@ -481,33 +528,23 @@
                 const m = Math.floor((diff / 1000 / 60) % 60);
                 document.getElementById('countdownDisplay').innerText = `${d}d ${h}h ${m}m`;
             };
-            update();
-            setInterval(update, 60000);
+            update(); setInterval(update, 60000);
         },
 
-        // --- TASKS ---
         addTask: () => {
             const input = document.getElementById('taskInput');
             const subject = document.getElementById('subjectSelect').value;
             if (!input.value.trim()) return;
-
             State.tasks.push({ id: Date.now(), text: input.value.trim(), subject: subject, done: false });
-            DB.set('up_tasks', State.tasks);
-            input.value = '';
-            App.renderTasks();
+            DB.set('up_tasks', State.tasks); input.value = ''; App.renderTasks();
         },
         toggleTask: (id) => {
             const task = State.tasks.find(t => t.id === id);
             if (task) { task.done = !task.done; DB.set('up_tasks', State.tasks); App.renderTasks(); }
         },
-        deleteTask: (id) => {
-            State.tasks = State.tasks.filter(t => t.id !== id);
-            DB.set('up_tasks', State.tasks);
-            App.renderTasks();
-        },
+        deleteTask: (id) => { State.tasks = State.tasks.filter(t => t.id !== id); DB.set('up_tasks', State.tasks); App.renderTasks(); },
         renderTasks: () => {
-            const list = document.getElementById('taskList');
-            list.innerHTML = State.tasks.map(t => `
+            document.getElementById('taskList').innerHTML = State.tasks.map(t => `
                 <div class="list-item" style="opacity: ${t.done ? '0.5' : '1'};">
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <input type="checkbox" style="width:18px; height:18px;" ${t.done ? 'checked' : ''} onchange="App.toggleTask(${t.id})">
@@ -516,18 +553,13 @@
                     <button class="delete-btn" onclick="App.deleteTask(${t.id})">✕</button>
                 </div>
             `).join('');
-
             const completed = State.tasks.filter(t => t.done).length;
             document.getElementById('taskCounter').innerText = `${completed}/${State.tasks.length}`;
             App.renderChart();
         },
 
-        // --- CHARTS ---
         renderChart: () => {
-            if (typeof Chart === 'undefined') {
-                document.getElementById('chartCard').style.display = 'none';
-                return;
-            }
+            if (typeof Chart === 'undefined') { document.getElementById('chartCard').style.display = 'none'; return; }
             const ctx = document.getElementById('taskChart');
             if (!ctx || window.getComputedStyle(ctx.parentElement.parentElement).display === 'none') return;
             if (chartInstance) chartInstance.destroy();
@@ -549,14 +581,10 @@
             });
         },
 
-        // --- SYLLABUS ---
         saveSyl: () => {
             const boxes = document.querySelectorAll('.syl-cb');
             let checked = 0;
-            boxes.forEach(b => {
-                State.syl[b.id] = b.checked;
-                if (b.checked) checked++;
-            });
+            boxes.forEach(b => { State.syl[b.id] = b.checked; if (b.checked) checked++; });
             DB.set('up_syl', State.syl);
             const pct = boxes.length ? Math.round((checked / boxes.length) * 100) : 0;
             document.getElementById('sylProgress').innerText = `${pct}%`;
@@ -564,34 +592,19 @@
         loadSyl: () => {
             const boxes = document.querySelectorAll('.syl-cb');
             let checked = 0;
-            boxes.forEach(b => {
-                if (State.syl[b.id]) {
-                    b.checked = true;
-                    checked++;
-                }
-            });
+            boxes.forEach(b => { if (State.syl[b.id]) { b.checked = true; checked++; } });
             const pct = boxes.length ? Math.round((checked / boxes.length) * 100) : 0;
             document.getElementById('sylProgress').innerText = `${pct}%`;
         },
 
-        // --- NOTES ---
         addNote: () => {
-            const title = document.getElementById('noteTitle').value.trim();
-            const content = document.getElementById('noteContent').value.trim();
+            const title = document.getElementById('noteTitle').value.trim(); const content = document.getElementById('noteContent').value.trim();
             if (!title || !content) return;
-
             State.notes.unshift({ id: Date.now(), title, content, date: new Date().toLocaleDateString() });
             DB.set('up_notes', State.notes);
-            
-            document.getElementById('noteTitle').value = '';
-            document.getElementById('noteContent').value = '';
-            App.renderNotes();
+            document.getElementById('noteTitle').value = ''; document.getElementById('noteContent').value = ''; App.renderNotes();
         },
-        deleteNote: (id) => {
-            State.notes = State.notes.filter(n => n.id !== id);
-            DB.set('up_notes', State.notes);
-            App.renderNotes();
-        },
+        deleteNote: (id) => { State.notes = State.notes.filter(n => n.id !== id); DB.set('up_notes', State.notes); App.renderNotes(); },
         renderNotes: () => {
             document.getElementById('noteList').innerHTML = State.notes.map(n => `
                 <div class="card" style="padding: 1rem;">
@@ -605,25 +618,14 @@
             `).join('');
         },
 
-        // --- CURRENT AFFAIRS ---
         addCA: () => {
-            const title = document.getElementById('caTitle').value.trim();
-            const paper = document.getElementById('caPaper').value;
-            const content = document.getElementById('caContent').value.trim();
+            const title = document.getElementById('caTitle').value.trim(); const paper = document.getElementById('caPaper').value; const content = document.getElementById('caContent').value.trim();
             if (!title) return;
-
             State.cas.unshift({ id: Date.now(), title, paper, content, date: new Date().toLocaleDateString() });
             DB.set('up_ca', State.cas);
-            
-            document.getElementById('caTitle').value = '';
-            document.getElementById('caContent').value = '';
-            App.renderCA();
+            document.getElementById('caTitle').value = ''; document.getElementById('caContent').value = ''; App.renderCA();
         },
-        deleteCA: (id) => {
-            State.cas = State.cas.filter(c => c.id !== id);
-            DB.set('up_ca', State.cas);
-            App.renderCA();
-        },
+        deleteCA: (id) => { State.cas = State.cas.filter(c => c.id !== id); DB.set('up_ca', State.cas); App.renderCA(); },
         renderCA: () => {
             document.getElementById('caList').innerHTML = State.cas.map(c => `
                 <div class="card" style="padding: 1rem;">
@@ -637,29 +639,16 @@
             `).join('');
         },
 
-        // --- REVISION ---
         addRev: () => {
-            const topic = document.getElementById('revTopic').value.trim();
-            const date = document.getElementById('revDate').value;
+            const topic = document.getElementById('revTopic').value.trim(); const date = document.getElementById('revDate').value;
             if (!topic || !date) return;
-
             State.revs.push({ id: Date.now(), topic, date, done: false });
             State.revs.sort((a, b) => new Date(a.date) - new Date(b.date)); 
             DB.set('up_rev', State.revs);
-            
-            document.getElementById('revTopic').value = '';
-            document.getElementById('revDate').value = '';
-            App.renderRevs();
+            document.getElementById('revTopic').value = ''; document.getElementById('revDate').value = ''; App.renderRevs();
         },
-        toggleRev: (id) => {
-            const rev = State.revs.find(r => r.id === id);
-            if (rev) { rev.done = !rev.done; DB.set('up_rev', State.revs); App.renderRevs(); }
-        },
-        deleteRev: (id) => {
-            State.revs = State.revs.filter(r => r.id !== id);
-            DB.set('up_rev', State.revs);
-            App.renderRevs();
-        },
+        toggleRev: (id) => { const rev = State.revs.find(r => r.id === id); if (rev) { rev.done = !rev.done; DB.set('up_rev', State.revs); App.renderRevs(); } },
+        deleteRev: (id) => { State.revs = State.revs.filter(r => r.id !== id); DB.set('up_rev', State.revs); App.renderRevs(); },
         renderRevs: () => {
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('revList').innerHTML = State.revs.map(r => {
@@ -679,136 +668,76 @@
             }).join('');
         },
 
-        // --- TESTS ---
         addTest: () => {
-            const name = document.getElementById('testName').value.trim();
-            const score = document.getElementById('testScore').value;
+            const name = document.getElementById('testName').value.trim(); const score = document.getElementById('testScore').value;
             if (!name || !score) return;
-
             State.tests.push({ id: Date.now(), name, score: Number(score), date: new Date().toLocaleDateString() });
             DB.set('up_tests', State.tests);
-            
-            document.getElementById('testName').value = '';
-            document.getElementById('testScore').value = '';
-            App.renderTests();
+            document.getElementById('testName').value = ''; document.getElementById('testScore').value = ''; App.renderTests();
         },
-        deleteTest: (id) => {
-            State.tests = State.tests.filter(t => t.id !== id);
-            DB.set('up_tests', State.tests);
-            App.renderTests();
-        },
+        deleteTest: (id) => { State.tests = State.tests.filter(t => t.id !== id); DB.set('up_tests', State.tests); App.renderTests(); },
         renderTests: () => {
             document.getElementById('testList').innerHTML = State.tests.slice().reverse().map(t => `
                 <div class="list-item">
-                    <div>
-                        <strong>${t.name}</strong><br>
-                        <span style="font-size:0.75rem; color:var(--text-muted);">${t.date}</span>
-                    </div>
-                    <div style="display:flex; align-items:center; gap:15px;">
-                        <span style="font-size: 1.5rem; font-weight:700; color:var(--green);">${t.score}</span>
-                        <button class="delete-btn" onclick="App.deleteTest(${t.id})">✕</button>
-                    </div>
+                    <div><strong>${t.name}</strong><br><span style="font-size:0.75rem; color:var(--text-muted);">${t.date}</span></div>
+                    <div style="display:flex; align-items:center; gap:15px;"><span style="font-size: 1.5rem; font-weight:700; color:var(--green);">${t.score}</span>
+                    <button class="delete-btn" onclick="App.deleteTest(${t.id})">✕</button></div>
                 </div>
             `).join('');
         },
 
-        // --- POMODORO TIMER ---
-        pomoInterval: null,
-        pomoTime: 1500, // 25 minutes in seconds
-        pomoRunning: false,
-        
+        pomoInterval: null, pomoTime: 1500, pomoRunning: false,
         togglePomo: () => {
             const btn = document.getElementById('pomoBtn');
             if (App.pomoRunning) {
-                clearInterval(App.pomoInterval);
-                btn.innerText = "Resume Focus";
-                btn.style.background = "var(--gold)";
+                clearInterval(App.pomoInterval); btn.innerText = "Resume Focus"; btn.style.background = "var(--gold)";
             } else {
-                btn.innerText = "Pause Timer";
-                btn.style.background = "var(--bg-hover)";
-                btn.style.color = "var(--text-light)";
+                btn.innerText = "Pause Timer"; btn.style.background = "var(--bg-hover)"; btn.style.color = "var(--text-light)";
                 App.pomoInterval = setInterval(() => {
-                    if (App.pomoTime <= 0) {
-                        clearInterval(App.pomoInterval);
-                        alert("Session complete! Take a 5-minute break.");
-                        App.resetPomo();
-                        return;
-                    }
+                    if (App.pomoTime <= 0) { clearInterval(App.pomoInterval); alert("Session complete! Take a 5-minute break."); App.resetPomo(); return; }
                     App.pomoTime--;
-                    const m = String(Math.floor(App.pomoTime / 60)).padStart(2, '0');
-                    const s = String(App.pomoTime % 60).padStart(2, '0');
+                    const m = String(Math.floor(App.pomoTime / 60)).padStart(2, '0'); const s = String(App.pomoTime % 60).padStart(2, '0');
                     document.getElementById('pomoDisplay').innerText = `${m}:${s}`;
                 }, 1000);
             }
             App.pomoRunning = !App.pomoRunning;
         },
-        
         resetPomo: () => {
-            clearInterval(App.pomoInterval);
-            App.pomoRunning = false;
-            App.pomoTime = 1500;
+            clearInterval(App.pomoInterval); App.pomoRunning = false; App.pomoTime = 1500;
             document.getElementById('pomoDisplay').innerText = "25:00";
-            const btn = document.getElementById('pomoBtn');
-            btn.innerText = "Start Focus";
-            btn.style.background = "var(--gold)";
-            btn.style.color = "#000";
+            const btn = document.getElementById('pomoBtn'); btn.innerText = "Start Focus"; btn.style.background = "var(--gold)"; btn.style.color = "#000";
         },
 
-        // --- DATA BACKUP & RESTORE ---
         exportData: () => {
-            const exportObj = {
-                tasks: State.tasks, notes: State.notes, tests: State.tests, 
-                syl: State.syl, cas: State.cas, revs: State.revs
-            };
+            const exportObj = { tasks: State.tasks, notes: State.notes, tests: State.tests, syl: State.syl, cas: State.cas, revs: State.revs };
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj));
             const downloadAnchorNode = document.createElement('a');
-            downloadAnchorNode.setAttribute("href",     dataStr);
-            downloadAnchorNode.setAttribute("download", `UPSC_Backup_${new Date().toISOString().split('T')[0]}.json`);
-            document.body.appendChild(downloadAnchorNode); 
-            downloadAnchorNode.click();
-            downloadAnchorNode.remove();
+            downloadAnchorNode.setAttribute("href", dataStr); downloadAnchorNode.setAttribute("download", `UPSC_Backup_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(downloadAnchorNode); downloadAnchorNode.click(); downloadAnchorNode.remove();
         },
         
         importData: (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
+            const file = event.target.files[0]; if (!file) return;
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
                     const imported = JSON.parse(e.target.result);
-                    if(imported.tasks) DB.set('up_tasks', imported.tasks);
-                    if(imported.notes) DB.set('up_notes', imported.notes);
-                    if(imported.tests) DB.set('up_tests', imported.tests);
-                    if(imported.syl) DB.set('up_syl', imported.syl);
-                    if(imported.cas) DB.set('up_ca', imported.cas);
-                    if(imported.revs) DB.set('up_rev', imported.revs);
-                    
-                    alert("Data restored successfully! The page will now reload to apply your data.");
-                    location.reload();
-                } catch (error) {
-                    alert("Error reading file. Please make sure it is a valid backup JSON.");
-                }
+                    if(imported.tasks) DB.set('up_tasks', imported.tasks); if(imported.notes) DB.set('up_notes', imported.notes);
+                    if(imported.tests) DB.set('up_tests', imported.tests); if(imported.syl) DB.set('up_syl', imported.syl);
+                    if(imported.cas) DB.set('up_ca', imported.cas); if(imported.revs) DB.set('up_rev', imported.revs);
+                    alert("Data restored successfully!"); location.reload();
+                } catch (error) { alert("Error reading file."); }
             };
             reader.readAsText(file);
         },
 
-        // --- BOOTLOADER ---
         boot: () => {
-            App.updateSubjects();
-            App.startTimer();
-            App.renderTasks();
-            App.loadSyl();
-            App.renderNotes();
-            App.renderCA();
-            App.renderRevs();
-            App.renderTests();
+            App.updateSubjects(); App.startTimer(); App.renderTasks(); App.loadSyl(); App.renderNotes(); App.renderCA(); App.renderRevs(); App.renderTests();
         }
     };
 
-    // 5. INITIALIZATION
     try { App.boot(); } catch(e) {}
     document.addEventListener('DOMContentLoaded', () => { try { App.boot(); } catch(e) {} });
-
 </script>
 </body>
 </html>
