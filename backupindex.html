@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>UPSC Mission Control - Private Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0f172a; --bg-card: #1e293b; --bg-hover: #334155;
+            --gold: #f59e0b; --text-light: #f8fafc; --text-muted: #94a3b8;
+            --border: #334155; --red: #ef4444; --green: #10b981;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background: var(--bg-dark); color: var(--text-light); height: 100vh; overflow: hidden; overscroll-behavior: none; }
+
+        /* STRICT AUTHENTICATION GATE */
+        .auth-gate { position: fixed; inset: 0; background: var(--bg-dark); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
+        .auth-box { background: var(--bg-card); padding: 3rem 2rem; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-width: 400px; width: 100%; display: flex; flex-direction: column; gap: 15px; }
+        .auth-box h1 { color: var(--gold); font-size: 2rem; margin-bottom: 5px; }
+        .auth-box p { color: var(--text-muted); margin-bottom: 15px; font-size: 0.95rem; }
+
+        /* MAIN APP WRAPPER */
+        #appContent { display: none; flex-direction: column; height: 100vh; width: 100vw; }
+
+        /* HEADER & NAVIGATION */
+        .app-header { background: var(--bg-card); padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+        .app-header h1 { font-size: 1.2rem; font-weight: 600; color: var(--gold); }
+        
+        .tab-nav { display: flex; gap: 10px; padding: 1rem; background: var(--bg-dark); overflow-x: auto; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+        .tab-btn { padding: 0.6rem 1.2rem; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted); border-radius: 8px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: 0.2s; }
+        .tab-btn.active { background: rgba(245, 158, 11, 0.1); color: var(--gold); border-color: var(--gold); }
+
+        /* MAIN CONTENT AREA */
+        .container { padding: 1.5rem 1rem; max-width: 900px; margin: 0 auto; width: 100%; flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; }
+        .view-section { display: none; flex-direction: column; flex-grow: 1; }
+        .view-section.active { display: flex; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* CARDS & UI ELEMENTS */
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+        .card-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; }
+        
+        .timer-box { text-align: center; border: 1px solid var(--gold); padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; background: rgba(245, 158, 11, 0.05); }
+        .timer-time { font-size: 2.2rem; font-weight: 700; color: var(--text-light); margin-top: 0.5rem; font-variant-numeric: tabular-nums; }
+
+        .input-group { display: flex; gap: 10px; margin-bottom: 1rem; flex-wrap: wrap; }
+        .input-control { flex: 1; min-width: 120px; padding: 0.8rem; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 8px; color: var(--text-light); outline: none; font-size: 1rem; }
+        .input-control:focus { border-color: var(--gold); }
+        .btn-primary { background: var(--gold); color: #000; border: none; padding: 0.8rem 1.5rem; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 1rem; }
+        
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 0.8rem; background: var(--bg-dark); }
+        .badge { background: var(--border); color: var(--text-muted); padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.75rem; margin-right: 8px; font-weight: 600; }
+        .delete-btn { background: transparent; border: none; color: var(--red); font-size: 1.2rem; font-weight: bold; cursor: pointer; padding: 0.2rem 0.5rem; }
+
+        /* PRO NOTEBOOK SYSTEM */
+        .library-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 20px; margin-top: 20px; }
+        .notebook-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.2s; }
+        .notebook-item:hover { transform: translateY(-5px); }
+        .notebook-cover { width: 120px; height: 160px; border-radius: 4px 12px 12px 4px; box-shadow: 2px 4px 10px rgba(0,0,0,0.5); position: relative; display: flex; align-items: center; justify-content: center; }
+        .notebook-cover::before { content: ''; position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: rgba(0,0,0,0.2); }
+        .notebook-title { margin-top: 10px; font-size: 0.85rem; font-weight: 600; text-align: center; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        .nb-workspace { display: flex; flex-direction: column; flex-grow: 1; height: 100%; position: relative; }
+        .nb-header { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: var(--bg-card); border-radius: 12px 12px 0 0; border: 1px solid var(--border); border-bottom: none; }
+        
+        .nb-canvas-wrapper { position: relative; flex-grow: 1; border: 1px solid var(--border); border-radius: 0 0 12px 12px; overflow: hidden; background-color: #1e293b; touch-action: none; }
+        .page-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(15, 23, 42, 0.7); color: white; border: none; width: 40px; height: 80px; font-size: 1.5rem; cursor: pointer; z-index: 10; border-radius: 8px; backdrop-filter: blur(4px); transition: 0.2s; }
+        .page-btn:hover { background: rgba(245, 158, 11, 0.9); }
+        #btnPrevPage { left: 10px; }
+        #btnNextPage { right: 10px; }
+        
+        .wb-toolbar { display: flex; gap: 12px; margin-top: 15px; justify-content: center; align-items: center; background: var(--bg-card); padding: 12px; border-radius: 12px; border: 1px solid var(--border); flex-wrap: wrap; }
+        .tool-btn { padding: 0.5rem 1rem; background: var(--bg-dark); color: var(--text-light); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 5px; }
+        .tool-btn.active { border-color: var(--gold); background: rgba(245, 158, 11, 0.1); color: var(--gold); }
+        .color-btn { width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; flex-shrink: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.4); }
+        .color-btn.active { border-color: var(--gold); transform: scale(1.15); box-shadow: 0 0 8px rgba(245, 158, 11, 0.6); }
+
+        /* Modal */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(3px); }
+        .modal-content { background: var(--bg-card); padding: 2rem; border-radius: 12px; border: 1px solid var(--border); width: 90%; max-width: 400px; }
+    </style>
+</head>
+<body>
+
+    <div id="loginScreen" class="auth-gate">
+        <div class="auth-box">
+            <h1>UPSC Vault</h1>
+            <p>Private Access Only</p>
+            <input type="email" id="authEmail" class="input-control" placeholder="Email Address">
+            <input type="password" id="authPass" class="input-control" placeholder="Password">
+            <button class="btn-primary" id="loginBtn" onclick="SecuritySystem.login()" style="margin-top: 10px;">Unlock Vault</button>
+            <div id="loginError" style="color: var(--red); font-size: 0.85rem; margin-top: 5px; display: none;"></div>
+        </div>
+    </div>
+
+    <div id="appContent">
+        <header class="app-header">
+            <h1>UPSC Mission Control</h1>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <button class="btn-primary" style="background: var(--bg-hover); color: white; padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="SecuritySystem.logout()">Lock Vault</button>
+            </div>
+        </header>
+
+        <div class="tab-nav">
+            <button class="tab-btn active" onclick="App.switchTab('tab-dash', this)">Dashboard</button>
+            <button class="tab-btn" onclick="App.switchTab('tab-syl', this)">Syllabus</button>
+            <button class="tab-btn" onclick="App.switchTab('tab-notes', this)">Notes</button>
+            <button class="tab-btn" onclick="App.switchTab('tab-ca', this)">Current Affairs</button>
+            <button class="tab-btn" onclick="App.switchTab('tab-rev', this)">Revision</button>
+            <button class="tab-btn" onclick="App.switchTab('tab-tests', this)">Mock Tests</button>
+            <button class="tab-btn" onclick="App.switchTab('tab-scribble', this)">✎ Notebooks</button>
+        </div>
+
+        <main class="container" id="mainContainer">
+            
+            <section id="tab-dash" class="view-section active">
+                <div class="timer-box">
+                    <div style="color: var(--gold); font-size: 0.85rem; font-weight: 600; letter-spacing: 1px;">TARGET: PRELIMS (MAY 23, 2027)</div>
+                    <div class="timer-time" id="countdownDisplay">Initializing...</div>
+                </div>
+
+                <div class="card" style="text-align: center;">
+                    <div class="card-title" style="justify-content: center;">Focus Session</div>
+                    <div id="pomoDisplay" style="font-size: 3rem; font-weight: 700; color: var(--green); font-variant-numeric: tabular-nums;">25:00</div>
+                    <div style="display: flex; gap: 10px; justify-content: center; margin-top: 1rem;">
+                        <button class="btn-primary" id="pomoBtn" onclick="App.togglePomo()" style="padding: 0.8rem 1.5rem;">Start Focus</button>
+                        <button class="tab-btn" onclick="App.resetPomo()">Reset</button>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-bottom: 1.5rem;">
+                    <button class="tab-btn" onclick="App.exportData()">💾 Backup Data</button>
+                    <label class="tab-btn" style="cursor: pointer;">
+                        📂 Restore Data
+                        <input type="file" accept=".json" style="display: none;" onchange="App.importData(event)">
+                    </label>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Daily Missions <span id="taskCounter" style="color: var(--gold);">0/0</span></div>
+                    <div class="input-group">
+                        <select id="examSelect" class="input-control" onchange="App.updateSubjects()" style="flex: 0.5;">
+                            <option value="Prelims">Prelims</option><option value="Mains">Mains</option>
+                        </select>
+                        <select id="subjectSelect" class="input-control" style="flex: 0.5;"></select>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="taskInput" class="input-control" placeholder="What topic are you studying today?">
+                        <button class="btn-primary" onclick="App.addTask()" style="padding: 0.8rem 1.5rem;">Add Task</button>
+                    </div>
+                    <div id="taskList"></div>
+                </div>
+
+                <div class="card" id="chartCard">
+                    <div class="card-title">Subject Focus</div>
+                    <div style="position: relative; height: 220px; width: 100%;"><canvas id="taskChart"></canvas></div>
+                </div>
+            </section>
+
+            <section id="tab-syl" class="view-section">
+                <div class="card">
+                    <div class="card-title">Syllabus Completion <span id="sylProgress" style="color: var(--gold);">0%</span></div>
+                    
+                    <div style="margin-bottom: 1rem; color: var(--gold); font-weight: 600;">Prelims Specific</div>
+                    <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="p1" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> Current Events of National & International Importance</label></div>
+                    <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="p2" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> CSAT - Comprehension, Reasoning & Numeracy</label></div>
+
+                    <div style="margin-top: 1.5rem; margin-bottom: 1rem; color: var(--gold); font-weight: 600;">GS Paper 1</div>
+                    <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="s1" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> Art, Architecture & Culture</label></div>
+                    <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="s2" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> Modern Indian & World History</label></div>
+                    <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="s3" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> Indian & World Geography</label></div>
+                    <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="s3a" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> Indian Society & Social Issues</label></div>
+                    
+                    <div style="margin-top: 1.5rem; margin-bottom: 1rem; color: var(--gold); font-weight: 600;">GS Paper 2</div>
+                    <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="s4" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> Indian Polity & Constitution</label></div>
+                    <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="s4a" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> Governance & Social Justice</label></div>
+                    <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="s5" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> International Relations</label></div>
+
+                    <div style="margin-top: 1.5rem; margin-bottom: 1rem; color: var(--gold); font-weight: 600;">GS Paper 3</div>
+                    <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="s6" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> Indian Economy & Agriculture</label></div>
+                    <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="s7" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> Science & Technology</label></div>
+                    <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="s8" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> Environment, Biodiversity & Disaster Mgmt</label></div>
+                    <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="s9" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> Internal Security</label></div>
+
+                    <div style="margin-top: 1.5rem; margin-bottom: 1rem; color: var(--gold); font-weight: 600;">GS Paper 4</div>
+                    <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="s10" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> Ethics & Human Interface</label></div>
+                    <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="s11" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> Aptitude & Foundational Values</label></div>
+                    <div class="list-item"><label style="display:flex; align-items:center; gap:10px; width:100%; cursor:pointer;"><input type="checkbox" id="s12" class="syl-cb" onchange="App.saveSyl()" style="width:18px; height:18px;"> Emotional Intelligence & Case Studies</label></div>
+                </div>
+            </section>
+
+            <section id="tab-notes" class="view-section">
+                <div class="card">
+                    <div class="card-title">Add Text Note</div>
+                    <div class="input-group">
+                        <input type="text" id="noteTitle" class="input-control" placeholder="Topic">
+                    </div>
+                    <div class="input-group">
+                        <textarea id="noteContent" class="input-control" placeholder="Write your notes here..." style="min-height: 120px; width:100%; resize: vertical;"></textarea>
+                    </div>
+                    <button class="btn-primary" onclick="App.addNote()" style="padding: 0.8rem 1.5rem;">Save Note</button>
+                </div>
+                <div id="noteList"></div>
+            </section>
+            
+            <section id="tab-ca" class="view-section">
+                <div class="card">
+                    <div class="card-title">Log News Event</div>
+                    <div class="input-group">
+                        <input type="text" id="caTitle" class="input-control" placeholder="Headline" style="flex: 0.7;">
+                        <select id="caPaper" class="input-control" style="flex: 0.3;">
+                            <option>Pre</option><option>GS1</option><option>GS2</option><option>GS3</option><option>GS4</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <textarea id="caContent" class="input-control" placeholder="Summary..." style="min-height: 80px; width:100%; resize: vertical;"></textarea>
+                    </div>
+                    <button class="btn-primary" onclick="App.addCA()" style="padding: 0.8rem 1.5rem;">Save Record</button>
+                </div>
+                <div id="caList"></div>
+            </section>
+
+            <section id="tab-rev" class="view-section">
+                <div class="card">
+                    <div class="card-title">Schedule Revision</div>
+                    <div class="input-group">
+                        <input type="text" id="revTopic" class="input-control" placeholder="Topic...">
+                        <input type="date" id="revDate" class="input-control">
+                        <button class="btn-primary" onclick="App.addRev()" style="padding: 0.8rem 1.5rem;">Schedule</button>
+                    </div>
+                </div>
+                <div id="revList"></div>
+            </section>
+
+            <section id="tab-tests" class="view-section">
+                <div class="card">
+                    <div class="card-title">Log Mock Test</div>
+                    <div class="input-group">
+                        <input type="text" id="testName" class="input-control" placeholder="Test Name (e.g., Vision GS 1)">
+                        <input type="number" id="testScore" class="input-control" placeholder="Score" style="flex: 0.4;">
+                        <button class="btn-primary" onclick="App.addTest()" style="padding: 0.8rem 1.5rem;">Log Score</button>
+                    </div>
+                </div>
+                <div id="testList"></div>
+            </section>
+
+            <section id="tab-scribble" class="view-section" style="padding: 0;">
+                <div id="view-library" style="display: block; padding-top: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2 style="font-size: 1.5rem;">My Notebooks</h2>
+                        <button class="btn-primary" onclick="NotebookSystem.showModal()" style="padding: 0.6rem 1rem;">+ New Notebook</button>
+                    </div>
+                    <div class="library-grid" id="notebookGrid"></div>
+                </div>
+
+                <div id="view-editor" class="nb-workspace" style="display: none;">
+                    <div class="nb-header">
+                        <button class="tab-btn" onclick="NotebookSystem.closeNotebook()">❮ Back to Folders</button>
+                        <div style="text-align: center;">
+                            <div id="currentNbTitle" style="font-weight: 700; color: var(--gold);">Notebook Title</div>
+                            <div id="pageIndicator" style="font-size: 0.75rem; color: var(--text-muted);">Page 1 of 1</div>
+                        </div>
+                        <button class="tab-btn" style="color: var(--red); border-color: var(--border);" onclick="NotebookSystem.deleteCurrentNotebook()">🗑️ Delete</button>
+                    </div>
+                    
+                    <div id="wbContainer" class="nb-canvas-wrapper">
+                        <button id="btnPrevPage" class="page-btn" onclick="NotebookSystem.prevPage()" style="display:none;">❮</button>
+                        <button id="btnNextPage" class="page-btn" onclick="NotebookSystem.nextPage()">❯</button>
+                        <canvas id="noteCanvas" style="display: block; width: 100%; height: 100%; cursor: crosshair; position: absolute; top:0; left:0;"></canvas>
+                    </div>
+
+                    <div class="wb-toolbar" id="penToolbar">
+                        <button class="tool-btn active" id="btnPen" onclick="Whiteboard.setTool('pen', this)">🖊️ Pen</button>
+                        <button class="tool-btn" id="btnHighlighter" onclick="Whiteboard.setTool('highlighter', this)">🖍️ Highlight</button>
+                        <button class="tool-btn" id="btnEraser" onclick="Whiteboard.setTool('eraser', this)">🧹 Eraser</button>
+                        <div style="width: 1px; height: 25px; background: var(--border); margin: 0 5px;"></div>
+                        <button class="color-btn active" style="background: #f8fafc;" onclick="Whiteboard.setColor('#f8fafc', this)"></button>
+                        <button class="color-btn" style="background: #000000;" onclick="Whiteboard.setColor('#000000', this)"></button>
+                        <button class="color-btn" style="background: #ef4444;" onclick="Whiteboard.setColor('#ef4444', this)"></button>
+                        <button class="color-btn" style="background: #3b82f6;" onclick="Whiteboard.setColor('#3b82f6', this)"></button>
+                        <button class="color-btn" style="background: #10b981;" onclick="Whiteboard.setColor('#10b981', this)"></button>
+                        <button class="color-btn" style="background: #f59e0b;" onclick="Whiteboard.setColor('#f59e0b', this)"></button>
+                        <div style="flex-grow: 1;"></div>
+                        <button class="btn-primary" onclick="Whiteboard.savePDF()" style="padding: 0.5rem; background: #ef4444; color: white;">📄 PDF</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="newNotebookModal">
+        <div class="modal-content">
+            <div style="font-size: 1.2rem; font-weight: bold; margin-bottom: 1rem; color: var(--gold);">Create Notebook</div>
+            <label style="display:block; margin-bottom: 5px; color: var(--text-muted); font-size: 0.85rem;">Notebook Heading (Title)</label>
+            <input type="text" id="newNbTitle" class="input-control" placeholder="e.g., GS 1 History" style="width: 100%; margin-bottom: 15px;">
+            <label style="display:block; margin-bottom: 5px; color: var(--text-muted); font-size: 0.85rem;">Cover Color</label>
+            <select id="newNbCover" class="input-control" style="width: 100%; margin-bottom: 15px;">
+                <option value="#8b5cf6">Purple</option><option value="#c2a077">Kraft Paper (Brown)</option>
+                <option value="#3b82f6">Blue</option><option value="#1e293b">Dark Grey</option>
+            </select>
+            <label style="display:block; margin-bottom: 5px; color: var(--text-muted); font-size: 0.85rem;">Paper Template</label>
+            <select id="newNbTemplate" class="input-control" style="width: 100%; margin-bottom: 15px;">
+                <option value="grid">Grid</option><option value="rule">Rule (Lines)</option>
+                <option value="dot">Dot Matrix</option><option value="plain">Plain</option>
+            </select>
+            <label style="display:block; margin-bottom: 5px; color: var(--text-muted); font-size: 0.85rem;">Paper Tone</label>
+            <select id="newNbTone" class="input-control" style="width: 100%; margin-bottom: 20px;">
+                <option value="dark">Dark Mode (Black Paper)</option>
+                <option value="light">Light Mode (White Paper)</option>
+                <option value="yellow">Yellow Mode (Cream Paper)</option>
+            </select>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button class="tab-btn" onclick="NotebookSystem.hideModal()">Cancel</button>
+                <button class="btn-primary" onclick="NotebookSystem.createNotebook()" style="padding: 0.8rem 1.5rem;">Create</button>
+            </div>
+        </div>
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+    // YOUR EXACT FIREBASE KEYS
+    const firebaseConfig = {
+      apiKey: "AIzaSyCSUbwjYdxdGPUIjN_VYvcCcc6jLqflF5c",
+      authDomain: "upsc-web-1daf2.firebaseapp.com",
+      projectId: "upsc-web-1daf2",
+      storageBucket: "upsc-web-1daf2.firebasestorage.app",
+      messagingSenderId: "986435590514",
+      appId: "1:986435590514:web:784d4074a43b042890e5eb",
+      measurementId: "G-BRYJE09T9E"
+    };
+
+    const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app);
+    
+    // HARDCODED SECURITY GATE
+    const ALLOWED_EMAIL = "panditashwani34@gmail.com";
+
+    window.SecuritySystem = {
+        isLoggedIn: false,
+        login: async () => {
+            const email = document.getElementById('authEmail').value.trim();
+            const pass = document.getElementById('authPass').value;
+            const errorDiv = document.getElementById('loginError');
+            
+            if (email.toLowerCase() !== ALLOWED_EMAIL.toLowerCase()) {
+                errorDiv.innerText = "Unauthorized email address. Access Denied.";
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            document.getElementById('loginBtn').innerText = 'Verifying...';
+            
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+                errorDiv.style.display = 'none';
+            } catch (error) {
+                errorDiv.innerText = "Incorrect password or account not created yet.";
+                errorDiv.style.display = 'block';
+                document.getElementById('loginBtn').innerText = 'Unlock Vault';
+            }
+        },
+        logout: () => { signOut(auth); },
+        syncToCloud: async () => {
+            if (!auth.currentUser) return;
+            try {
+                await setDoc(doc(db, "users", auth.currentUser.uid), {
+                    tasks: State.tasks, notes: State.notes, tests: State.tests, syl: State.syl, cas: State.cas, revs: State.revs, notebooks: State.notebooks, lastUpdated: new Date().toISOString()
+                });
+            } catch (e) { console.error("Cloud sync failed:", e); }
+        }
+    };
+
+    onAuthStateChanged(auth, async (user) => {
+        if (user && user.email.toLowerCase() === ALLOWED_EMAIL.toLowerCase()) {
+            window.SecuritySystem.isLoggedIn = true;
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('appContent').style.display = 'flex';
+            
+            const docSnap = await getDoc(doc(db, "users", user.uid));
+            if (docSnap.exists()) {
+                const c = docSnap.data();
+                if(c.tasks) DB.set('up_tasks', c.tasks); if(c.notes) DB.set('up_notes', c.notes); if(c.notebooks) DB.set('up_nbs', c.notebooks);
+                if(c.syl) DB.set('up_syl', c.syl); if(c.cas) DB.set('up_ca', c.cas); if(c.revs) DB.set('up_rev', c.revs); if(c.tests) DB.set('up_tests', c.tests);
+                
+                State.tasks = c.tasks || []; State.notes = c.notes || []; State.notebooks = c.notebooks || [];
+                State.syl = c.syl || {}; State.cas = c.cas || []; State.revs = c.revs || []; State.tests = c.tests || [];
+            }
+            
+            App.boot(); NotebookSystem.renderLibrary();
+        } else {
+            if(user) signOut(auth);
+            window.SecuritySystem.isLoggedIn = false;
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('appContent').style.display = 'none';
+            document.getElementById('loginBtn').innerText = 'Unlock Vault';
+        }
+    });
+</script>
+
+<script>
+    // --- DATABASE & STATE ---
+    let fallbackMemory = {};
+    const DB = {
+        get: (key, def) => { try { let val = localStorage.getItem(key); return val ? JSON.parse(val) : (fallbackMemory[key] || def); } catch (e) { return fallbackMemory[key] || def; } },
+        set: (key, val) => { 
+            try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { fallbackMemory[key] = val; }
+            if (window.SecuritySystem && window.SecuritySystem.isLoggedIn) window.SecuritySystem.syncToCloud();
+        }
+    };
+
+    const State = {
+        tasks: DB.get('up_tasks', []), notes: DB.get('up_notes', []), syl: DB.get('up_syl', {}), cas: DB.get('up_ca', []), revs: DB.get('up_rev', []), tests: DB.get('up_tests', []),
+        notebooks: DB.get('up_nbs', [])
+    };
+    const Subjects = { Prelims: ["History", "Polity", "Economy", "Geography", "Environment", "Science", "CSAT"], Mains: ["GS 1", "GS 2", "GS 3", "GS 4", "Optional"] };
+    let chartInstance = null;
+    
+    // --- NOTEBOOK & INFINITE PAGING SYSTEM ---
+    const NotebookSystem = {
+        currentNbId: null, currentPageIdx: 0,
+        renderLibrary: () => {
+            const grid = document.getElementById('notebookGrid');
+            grid.innerHTML = State.notebooks.map(nb => `
+                <div class="notebook-item" onclick="NotebookSystem.openNotebook(${nb.id})">
+                    <div class="notebook-cover" style="background: ${nb.coverColor};"><div style="background: rgba(255,255,255,0.9); padding: 5px; width: 80%; text-align: center; font-size: 0.7rem; color: #000; border-radius: 4px;">${nb.pages.length} Pages</div></div>
+                    <div class="notebook-title">${nb.title}</div>
+                </div>
+            `).join('');
+        },
+        showModal: () => { document.getElementById('newNotebookModal').style.display = 'flex'; },
+        hideModal: () => { document.getElementById('newNotebookModal').style.display = 'none'; },
+        createNotebook: () => {
+            const title = document.getElementById('newNbTitle').value || 'Untitled Notebook';
+            const coverColor = document.getElementById('newNbCover').value; const template = document.getElementById('newNbTemplate').value; const tone = document.getElementById('newNbTone').value;
+            let pColor = '#1e293b', lColor = 'rgba(255,255,255,0.15)';
+            if (tone === 'light') { pColor = '#ffffff'; lColor = 'rgba(0,0,0,0.15)'; } else if (tone === 'yellow') { pColor = '#fdf6e3'; lColor = 'rgba(0,0,0,0.15)'; }
+            State.notebooks.unshift({ id: Date.now(), title, coverColor, template, pColor, lColor, pages: [null] }); DB.set('up_nbs', State.notebooks);
+            document.getElementById('newNbTitle').value = ''; NotebookSystem.hideModal(); NotebookSystem.renderLibrary();
+        },
+        openNotebook: (id) => {
+            document.getElementById('view-library').style.display = 'none'; document.getElementById('view-editor').style.display = 'flex';
+            document.getElementById('mainContainer').style.overflowY = 'hidden'; 
+            NotebookSystem.currentNbId = id; NotebookSystem.currentPageIdx = 0;
+            const nb = State.notebooks.find(n => n.id === id); document.getElementById('currentNbTitle').innerText = nb.title;
+            Whiteboard.applyTemplate(nb.template, nb.pColor, nb.lColor);
+            if (!Whiteboard.initialized) { setTimeout(Whiteboard.init, 50); Whiteboard.initialized = true; } else { Whiteboard.resizeCanvas(); }
+            setTimeout(NotebookSystem.loadCurrentPage, 100);
+        },
+        closeNotebook: () => {
+            NotebookSystem.saveCurrentPage(); document.getElementById('mainContainer').style.overflowY = 'auto'; 
+            document.getElementById('view-editor').style.display = 'none'; document.getElementById('view-library').style.display = 'block';
+            NotebookSystem.renderLibrary();
+        },
+        deleteCurrentNotebook: () => {
+            if(confirm("Are you sure you want to delete this entire notebook?")) { State.notebooks = State.notebooks.filter(n => n.id !== NotebookSystem.currentNbId); DB.set('up_nbs', State.notebooks); NotebookSystem.closeNotebook(); }
+        },
+        saveCurrentPage: () => {
+            if(!NotebookSystem.currentNbId) return;
+            const nb = State.notebooks.find(n => n.id === NotebookSystem.currentNbId);
+            nb.pages[NotebookSystem.currentPageIdx] = Whiteboard.canvas.toDataURL('image/png'); DB.set('up_nbs', State.notebooks);
+        },
+        loadCurrentPage: () => {
+            const nb = State.notebooks.find(n => n.id === NotebookSystem.currentNbId); const total = nb.pages.length;
+            document.getElementById('pageIndicator').innerText = `Page ${NotebookSystem.currentPageIdx + 1} of ${total}`;
+            document.getElementById('btnPrevPage').style.display = NotebookSystem.currentPageIdx > 0 ? 'block' : 'none';
+            document.getElementById('btnNextPage').innerText = NotebookSystem.currentPageIdx === total - 1 ? '➕' : '❯';
+            Whiteboard.ctx.clearRect(0, 0, Whiteboard.canvas.width, Whiteboard.canvas.height);
+            const pageData = nb.pages[NotebookSystem.currentPageIdx];
+            if (pageData) { const img = new Image(); img.onload = () => { Whiteboard.ctx.drawImage(img, 0, 0, Whiteboard.canvas.width / Whiteboard.dpr, Whiteboard.canvas.height / Whiteboard.dpr); }; img.src = pageData; }
+        },
+        nextPage: () => {
+            NotebookSystem.saveCurrentPage(); const nb = State.notebooks.find(n => n.id === NotebookSystem.currentNbId);
+            if (NotebookSystem.currentPageIdx === nb.pages.length - 1) nb.pages.push(null); 
+            NotebookSystem.currentPageIdx++; NotebookSystem.loadCurrentPage();
+        },
+        prevPage: () => { if (NotebookSystem.currentPageIdx > 0) { NotebookSystem.saveCurrentPage(); NotebookSystem.currentPageIdx--; NotebookSystem.loadCurrentPage(); } }
+    };
+
+    // --- PRO WHITEBOARD ENGINE ---
+    const Whiteboard = {
+        canvas: null, ctx: null, isDrawing: false, color: '#f8fafc', currentTool: 'pen', dpr: 1, initialized: false,
+        applyTemplate: (template, pColor, lColor) => {
+            const container = document.getElementById('wbContainer'); container.style.backgroundColor = pColor;
+            if (template === 'grid') { container.style.backgroundImage = `linear-gradient(to right, ${lColor} 1px, transparent 1px), linear-gradient(to bottom, ${lColor} 1px, transparent 1px)`; container.style.backgroundSize = '20px 20px'; } 
+            else if (template === 'rule') { container.style.backgroundImage = `linear-gradient(to bottom, ${lColor} 1px, transparent 1px)`; container.style.backgroundSize = '100% 30px'; } 
+            else if (template === 'dot') { container.style.backgroundImage = `radial-gradient(${lColor} 1px, transparent 1px)`; container.style.backgroundSize = '20px 20px'; container.style.backgroundPosition = '0 0'; } 
+            else { container.style.backgroundImage = 'none'; }
+            Whiteboard.currentNbData = { template, pColor, lColor };
+        },
+        init: () => {
+            Whiteboard.canvas = document.getElementById('noteCanvas'); Whiteboard.ctx = Whiteboard.canvas.getContext('2d');
+            Whiteboard.resizeCanvas(); Whiteboard.ctx.lineCap = 'round'; Whiteboard.ctx.lineJoin = 'round';
+            Whiteboard.canvas.addEventListener('pointerdown', Whiteboard.startPosition); Whiteboard.canvas.addEventListener('pointermove', Whiteboard.draw); window.addEventListener('pointerup', Whiteboard.endPosition);
+            Whiteboard.canvas.addEventListener('touchstart', (e) => { if (e.touches.length === 1 && e.target.id === 'noteCanvas') e.preventDefault(); }, {passive: false});
+        },
+        resizeCanvas: () => {
+            Whiteboard.dpr = window.devicePixelRatio || 1; const rect = Whiteboard.canvas.parentElement.getBoundingClientRect();
+            Whiteboard.canvas.width = rect.width * Whiteboard.dpr; Whiteboard.canvas.height = rect.height * Whiteboard.dpr;
+            Whiteboard.ctx.scale(Whiteboard.dpr, Whiteboard.dpr); Whiteboard.ctx.lineCap = 'round'; Whiteboard.ctx.lineJoin = 'round';
+        },
+        setTool: (tool, btn) => { Whiteboard.currentTool = tool; document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); },
+        setColor: (color, btn) => { Whiteboard.color = color; document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); if (Whiteboard.currentTool === 'eraser') Whiteboard.setTool('pen', document.getElementById('btnPen')); },
+        startPosition: (e) => { if(e.target.tagName === 'BUTTON') return; Whiteboard.isDrawing = true; Whiteboard.draw(e); },
+        endPosition: () => { Whiteboard.isDrawing = false; Whiteboard.ctx.beginPath(); NotebookSystem.saveCurrentPage(); },
+        draw: (e) => {
+            if (!Whiteboard.isDrawing) return;
+            const rect = Whiteboard.canvas.getBoundingClientRect(); const x = e.clientX - rect.left; const y = e.clientY - rect.top;
+            let pressure = e.pressure && e.pressure !== 0.5 ? e.pressure : 1; 
+            if (Whiteboard.currentTool === 'eraser') { Whiteboard.ctx.globalCompositeOperation = 'destination-out'; Whiteboard.ctx.lineWidth = 30; Whiteboard.ctx.globalAlpha = 1.0; } 
+            else if (Whiteboard.currentTool === 'highlighter') { Whiteboard.ctx.globalCompositeOperation = 'source-over'; Whiteboard.ctx.lineWidth = 18; Whiteboard.ctx.globalAlpha = 0.3; Whiteboard.ctx.strokeStyle = Whiteboard.color; } 
+            else { Whiteboard.ctx.globalCompositeOperation = 'source-over'; Whiteboard.ctx.lineWidth = 2 * (pressure * 2.5); Whiteboard.ctx.globalAlpha = 1.0; Whiteboard.ctx.strokeStyle = Whiteboard.color; }
+            Whiteboard.ctx.lineTo(x, y); Whiteboard.ctx.stroke(); Whiteboard.ctx.beginPath(); Whiteboard.ctx.moveTo(x, y);
+        },
+        savePDF: () => {
+            if (!window.jspdf) { alert("PDF Engine loading, wait 2 sec."); return; }
+            NotebookSystem.saveCurrentPage();
+            const { jsPDF } = window.jspdf; const cssW = Whiteboard.canvas.width / Whiteboard.dpr; const cssH = Whiteboard.canvas.height / Whiteboard.dpr;
+            const tempCanvas = document.createElement('canvas'); tempCanvas.width = Whiteboard.canvas.width; tempCanvas.height = Whiteboard.canvas.height;
+            const tCtx = tempCanvas.getContext('2d'); tCtx.scale(Whiteboard.dpr, Whiteboard.dpr);
+            const nb = Whiteboard.currentNbData;
+            tCtx.fillStyle = nb.pColor; tCtx.fillRect(0, 0, cssW, cssH);
+            tCtx.strokeStyle = nb.lColor; tCtx.fillStyle = nb.lColor; tCtx.lineWidth = 1;
+            if (nb.template === 'grid') { for(let x=0; x<cssW; x+=20) { tCtx.beginPath(); tCtx.moveTo(x,0); tCtx.lineTo(x,cssH); tCtx.stroke(); } for(let y=0; y<cssH; y+=20) { tCtx.beginPath(); tCtx.moveTo(0,y); tCtx.lineTo(cssW,y); tCtx.stroke(); } } 
+            else if (nb.template === 'rule') { for(let y=30; y<cssH; y+=30) { tCtx.beginPath(); tCtx.moveTo(0,y); tCtx.lineTo(cssW,y); tCtx.stroke(); } } 
+            else if (nb.template === 'dot') { for(let x=0; x<cssW; x+=20) { for(let y=0; y<cssH; y+=20) { tCtx.beginPath(); tCtx.arc(x, y, 1.5, 0, Math.PI*2); tCtx.fill(); } } }
+            tCtx.setTransform(1, 0, 0, 1, 0, 0); tCtx.drawImage(Whiteboard.canvas, 0, 0);
+            const pdf = new jsPDF({ orientation: cssW > cssH ? 'l' : 'p', unit: 'px', format: [cssW, cssH] });
+            pdf.addImage(tempCanvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, cssW, cssH); pdf.save(`Page_${NotebookSystem.currentPageIdx + 1}.pdf`);
+        }
+    };
+
+    const App = {
+        switchTab: (tabId, btnElement) => {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active'); btnElement.classList.add('active');
+            if(tabId === 'tab-dash') App.renderChart();
+            if(tabId === 'tab-scribble') { document.getElementById('view-library').style.display = 'block'; document.getElementById('view-editor').style.display = 'none'; NotebookSystem.renderLibrary(); }
+        },
+        updateSubjects: () => { const exam = document.getElementById('examSelect').value; document.getElementById('subjectSelect').innerHTML = (exam==='Prelims'?["History", "Polity", "Economy", "Geography", "Environment", "Science", "CSAT"]:["GS 1", "GS 2", "GS 3", "GS 4", "Optional"]).map(s => `<option value="${s}">${s}</option>`).join(''); },
+        
+        // TASKS
+        addTask: () => { const input = document.getElementById('taskInput'); if (!input.value.trim()) return; State.tasks.push({ id: Date.now(), text: input.value.trim(), subject: document.getElementById('subjectSelect').value, done: false }); DB.set('up_tasks', State.tasks); input.value = ''; App.renderTasks(); },
+        toggleTask: (id) => { const t = State.tasks.find(t => t.id === id); if (t) { t.done = !t.done; DB.set('up_tasks', State.tasks); App.renderTasks(); } },
+        deleteTask: (id) => { State.tasks = State.tasks.filter(t => t.id !== id); DB.set('up_tasks', State.tasks); App.renderTasks(); },
+        renderTasks: () => {
+            document.getElementById('taskList').innerHTML = State.tasks.map(t => `<div class="list-item" style="opacity: ${t.done ? '0.5' : '1'};"><div style="display: flex; align-items: center; gap: 10px;"><input type="checkbox" style="width:18px; height:18px;" ${t.done ? 'checked' : ''} onchange="App.toggleTask(${t.id})"><span style="${t.done ? 'text-decoration:line-through' : ''}"><span class="badge">${t.subject}</span> ${t.text}</span></div><button class="delete-btn" onclick="App.deleteTask(${t.id})">✕</button></div>`).join('');
+            document.getElementById('taskCounter').innerText = `${State.tasks.filter(t => t.done).length}/${State.tasks.length}`; App.renderChart();
+        },
+        renderChart: () => {
+            if (typeof Chart === 'undefined') return; const ctx = document.getElementById('taskChart'); if (!ctx || window.getComputedStyle(ctx.parentElement.parentElement).display === 'none') return;
+            if (chartInstance) chartInstance.destroy(); const counts = {}; State.tasks.forEach(t => counts[t.subject] = (counts[t.subject] || 0) + 1);
+            chartInstance = new Chart(ctx, { type: 'doughnut', data: { labels: Object.keys(counts).length ? Object.keys(counts) : ['No Tasks'], datasets: [{ data: Object.keys(counts).length ? Object.values(counts) : [1], backgroundColor: ['#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ef4444', '#1e293b'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#f8fafc' } } } } });
+        },
+
+        // SYLLABUS
+        saveSyl: () => { const boxes = document.querySelectorAll('.syl-cb'); let checked = 0; boxes.forEach(b => { State.syl[b.id] = b.checked; if (b.checked) checked++; }); DB.set('up_syl', State.syl); const pct = boxes.length ? Math.round((checked / boxes.length) * 100) : 0; document.getElementById('sylProgress').innerText = `${pct}%`; },
+        loadSyl: () => { const boxes = document.querySelectorAll('.syl-cb'); let checked = 0; boxes.forEach(b => { if (State.syl[b.id]) { b.checked = true; checked++; } }); const pct = boxes.length ? Math.round((checked / boxes.length) * 100) : 0; document.getElementById('sylProgress').innerText = `${pct}%`; },
+
+        // NOTES
+        addNote: () => { const title = document.getElementById('noteTitle').value.trim(); const content = document.getElementById('noteContent').value.trim(); if (!title || !content) return; State.notes.unshift({ id: Date.now(), title, content, date: new Date().toLocaleDateString() }); DB.set('up_notes', State.notes); document.getElementById('noteTitle').value = ''; document.getElementById('noteContent').value = ''; App.renderNotes(); },
+        deleteNote: (id) => { State.notes = State.notes.filter(n => n.id !== id); DB.set('up_notes', State.notes); App.renderNotes(); },
+        renderNotes: () => { document.getElementById('noteList').innerHTML = State.notes.map(n => `<div class="card" style="padding: 1rem;"><div style="display:flex; justify-content:space-between; margin-bottom: 5px;"><strong style="color:var(--gold);">${n.title}</strong><button class="delete-btn" onclick="App.deleteNote(${n.id})">✕</button></div><div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:10px;">${n.date}</div><div style="font-size:0.95rem; white-space:pre-wrap;">${n.content}</div></div>`).join(''); },
+
+        // CURRENT AFFAIRS
+        addCA: () => { const title = document.getElementById('caTitle').value.trim(); const paper = document.getElementById('caPaper').value; const content = document.getElementById('caContent').value.trim(); if (!title) return; State.cas.unshift({ id: Date.now(), title, paper, content, date: new Date().toLocaleDateString() }); DB.set('up_ca', State.cas); document.getElementById('caTitle').value = ''; document.getElementById('caContent').value = ''; App.renderCA(); },
+        deleteCA: (id) => { State.cas = State.cas.filter(c => c.id !== id); DB.set('up_ca', State.cas); App.renderCA(); },
+        renderCA: () => { document.getElementById('caList').innerHTML = State.cas.map(c => `<div class="card" style="padding: 1rem;"><div style="display:flex; justify-content:space-between; margin-bottom: 5px;"><strong>${c.title}</strong><button class="delete-btn" onclick="App.deleteCA(${c.id})">✕</button></div><div style="margin-bottom:10px;"><span class="badge">${c.paper}</span> <span style="font-size:0.75rem; color:var(--text-muted);">${c.date}</span></div><div style="font-size:0.95rem; white-space:pre-wrap;">${c.content}</div></div>`).join(''); },
+
+        // REVISION
+        addRev: () => { const topic = document.getElementById('revTopic').value.trim(); const date = document.getElementById('revDate').value; if (!topic || !date) return; State.revs.push({ id: Date.now(), topic, date, done: false }); State.revs.sort((a, b) => new Date(a.date) - new Date(b.date)); DB.set('up_rev', State.revs); document.getElementById('revTopic').value = ''; document.getElementById('revDate').value = ''; App.renderRevs(); },
+        toggleRev: (id) => { const rev = State.revs.find(r => r.id === id); if (rev) { rev.done = !rev.done; DB.set('up_rev', State.revs); App.renderRevs(); } },
+        deleteRev: (id) => { State.revs = State.revs.filter(r => r.id !== id); DB.set('up_rev', State.revs); App.renderRevs(); },
+        renderRevs: () => { const today = new Date().toISOString().split('T')[0]; document.getElementById('revList').innerHTML = State.revs.map(r => { const isDue = r.date <= today && !r.done; return `<div class="list-item" style="border-left: 4px solid ${isDue ? 'var(--red)' : 'transparent'}; opacity: ${r.done ? '0.5' : '1'};"><div style="display: flex; align-items: center; gap: 10px;"><input type="checkbox" style="width:18px; height:18px;" ${r.done ? 'checked' : ''} onchange="App.toggleRev(${r.id})"><div><div style="${r.done ? 'text-decoration:line-through' : ''}">${r.topic}</div><div style="font-size:0.75rem; color:${isDue ? 'var(--red)' : 'var(--text-muted)'}; font-weight: 600;">${r.date} ${isDue ? '(DUE)' : ''}</div></div></div><button class="delete-btn" onclick="App.deleteRev(${r.id})">✕</button></div>`; }).join(''); },
+
+        // TESTS
+        addTest: () => { const name = document.getElementById('testName').value.trim(); const score = document.getElementById('testScore').value; if (!name || !score) return; State.tests.push({ id: Date.now(), name, score: Number(score), date: new Date().toLocaleDateString() }); DB.set('up_tests', State.tests); document.getElementById('testName').value = ''; document.getElementById('testScore').value = ''; App.renderTests(); },
+        deleteTest: (id) => { State.tests = State.tests.filter(t => t.id !== id); DB.set('up_tests', State.tests); App.renderTests(); },
+        renderTests: () => { document.getElementById('testList').innerHTML = State.tests.slice().reverse().map(t => `<div class="list-item"><div><strong>${t.name}</strong><br><span style="font-size:0.75rem; color:var(--text-muted);">${t.date}</span></div><div style="display:flex; align-items:center; gap:15px;"><span style="font-size: 1.5rem; font-weight:700; color:var(--green);">${t.score}</span><button class="delete-btn" onclick="App.deleteTest(${t.id})">✕</button></div></div>`).join(''); },
+
+        // POMODORO
+        pomoInterval: null, pomoTime: 1500, pomoRunning: false,
+        togglePomo: () => { const btn = document.getElementById('pomoBtn'); if (App.pomoRunning) { clearInterval(App.pomoInterval); btn.innerText = "Resume Focus"; btn.style.background = "var(--gold)"; } else { btn.innerText = "Pause Timer"; btn.style.background = "var(--bg-hover)"; btn.style.color = "var(--text-light)"; App.pomoInterval = setInterval(() => { if (App.pomoTime <= 0) { clearInterval(App.pomoInterval); alert("Session complete! Take a break."); App.resetPomo(); return; } App.pomoTime--; const m = String(Math.floor(App.pomoTime / 60)).padStart(2, '0'); const s = String(App.pomoTime % 60).padStart(2, '0'); document.getElementById('pomoDisplay').innerText = `${m}:${s}`; }, 1000); } App.pomoRunning = !App.pomoRunning; },
+        resetPomo: () => { clearInterval(App.pomoInterval); App.pomoRunning = false; App.pomoTime = 1500; document.getElementById('pomoDisplay').innerText = "25:00"; const btn = document.getElementById('pomoBtn'); btn.innerText = "Start Focus"; btn.style.background = "var(--gold)"; btn.style.color = "#000"; },
+
+        // BACKUP & RESTORE DATA (RESTORED)
+        exportData: () => {
+            const exportObj = { tasks: State.tasks, notes: State.notes, tests: State.tests, syl: State.syl, cas: State.cas, revs: State.revs, notebooks: State.notebooks };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj));
+            const downloadAnchorNode = document.createElement('a'); downloadAnchorNode.setAttribute("href", dataStr); downloadAnchorNode.setAttribute("download", `UPSC_Backup_${new Date().toISOString().split('T')[0]}.json`); document.body.appendChild(downloadAnchorNode); downloadAnchorNode.click(); downloadAnchorNode.remove();
+        },
+        importData: (event) => {
+            const file = event.target.files[0]; if (!file) return; const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if(imported.tasks) DB.set('up_tasks', imported.tasks); if(imported.notes) DB.set('up_notes', imported.notes); if(imported.tests) DB.set('up_tests', imported.tests); if(imported.syl) DB.set('up_syl', imported.syl); if(imported.cas) DB.set('up_ca', imported.cas); if(imported.revs) DB.set('up_rev', imported.revs); if(imported.notebooks) DB.set('up_nbs', imported.notebooks);
+                    alert("Data restored successfully!"); location.reload();
+                } catch (error) { alert("Error reading file."); }
+            }; reader.readAsText(file);
+        },
+
+        boot: () => { App.updateSubjects(); App.renderTasks(); App.loadSyl(); App.renderNotes(); App.renderCA(); App.renderRevs(); App.renderTests(); }
+    };
+</script>
+</body>
+</html>
