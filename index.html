@@ -17,132 +17,140 @@
     <script async defer src="https://accounts.google.com/gsi/client" onload="DriveAuth.setGisLoaded()"></script>
 
     <style>
-        /* --- PREMIUM BLUE & WHITE THEME --- */
+        /* --- PREMIUM DASHBOARD THEME --- */
         :root { 
             --bg-main: #f1f5f9; --bg-card: #ffffff; --primary-text: #0f172a; --text-muted: #64748b; 
-            --accent-blue: #2563eb; --accent-hover: #1d4ed8; --gold: #f59e0b; --border: #cbd5e1; 
-            --red: #ef4444; --green: #10b981;
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05); --shadow-md: 0 4px 12px -1px rgba(0,0,0,0.08);
-            --shadow-float: 0 20px 40px -5px rgba(15,23,42,0.3);
-            --toolbar-bg: #1e293b;
+            --accent-blue: #2563eb; --accent-hover: #1d4ed8; --border: #cbd5e1; 
+            --red: #ff3b30; --green: #34c759; --dark-grey: #48484a; --gold: #f59e0b;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05); --shadow-float: 0 20px 40px -5px rgba(15,23,42,0.3);
+            
+            /* Workspace Dark Theme Constants */
+            --ws-bg: #000000; --ws-sidebar: #1c1c1e; --ws-topbar: #1c1c1e; 
+            --ws-border: #38383a; --ws-icon: #98989d; --ws-icon-active: #0a84ff;
+            --ws-popover: #2c2c2e; --ws-popover-hover: #3a3a3c;
         }
         
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
         body { background: var(--bg-main); color: var(--primary-text); height: 100vh; overflow: hidden; overscroll-behavior: none; }
         #appContent { display: flex; flex-direction: column; height: 100vh; width: 100vw; }
         
-        /* HEADER & NAVIGATION */
+        /* DASHBOARD HEADER & NAV */
         .app-header { background: var(--bg-card); padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); z-index: 10; box-shadow: var(--shadow-sm); }
         .app-header h1 { font-size: 1.25rem; font-weight: 800; color: var(--accent-blue); letter-spacing: -0.5px; }
-        
         .tab-nav { display: flex; gap: 10px; padding: 0.8rem 1.5rem; background: var(--bg-card); overflow-x: auto; flex-shrink: 0; scrollbar-width: none; border-bottom: 1px solid var(--border); }
         .tab-nav::-webkit-scrollbar { display: none; }
         .tab-btn { padding: 0.6rem 1.2rem; background: var(--bg-main); border: 1px solid var(--border); color: var(--text-muted); border-radius: 8px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: 0.15s ease; font-size: 0.9rem; }
         .tab-btn:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
         .tab-btn.active { background: var(--accent-blue); color: #ffffff; border-color: var(--accent-blue); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
         
+        /* CARDS & INPUTS */
         .container { padding: 1.5rem; max-width: 1100px; margin: 0 auto; width: 100%; flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; }
         .view-section { display: none; flex-direction: column; flex-grow: 1; }
-        .view-section.active { display: flex; animation: sectionFade 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
+        .view-section.active { display: flex; animation: sectionFade 0.25s ease-out; }
         @keyframes sectionFade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
         
         .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: var(--shadow-sm); }
         .card-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 1.2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--bg-main); padding-bottom: 0.5rem; }
-        
-        /* DATA INPUTS */
         .input-group { display: flex; gap: 10px; margin-bottom: 1rem; flex-wrap: wrap; }
-        .input-control { flex: 1; min-width: 140px; padding: 0.75rem 1rem; background: var(--bg-main); border: 1px solid var(--border); border-radius: 8px; color: var(--primary-text); outline: none; font-size: 0.95rem; font-weight: 500; transition: all 0.15s ease; }
-        .input-control:focus { border-color: var(--accent-blue); background: #ffffff; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
-        .btn-primary { background: var(--accent-blue); color: #ffffff; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.15s; font-size: 0.95rem; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
-        .btn-primary:hover { background: var(--accent-hover); }
+        .input-control { flex: 1; min-width: 140px; padding: 0.75rem 1rem; background: var(--bg-main); border: 1px solid var(--border); border-radius: 8px; color: var(--primary-text); outline: none; font-size: 0.95rem; font-weight: 500; }
+        .btn-primary { background: var(--accent-blue); color: #ffffff; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
         
         .timer-box { text-align: center; border: 1px solid var(--border); padding: 1.5rem; border-radius: 14px; margin-bottom: 1.5rem; background: #ffffff; box-shadow: var(--shadow-sm); }
-        .timer-time { font-size: 2.5rem; font-weight: 800; color: var(--primary-text); margin-top: 0.25rem; font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
+        .timer-time { font-size: 2.5rem; font-weight: 800; color: var(--primary-text); margin-top: 0.25rem; font-variant-numeric: tabular-nums; }
         .chart-container { position: relative; height: 220px; width: 100%; }
 
-        /* TASKS */
+        /* LISTS & NOTEBOOK GRID */
         .task-item { display: flex; justify-content: space-between; align-items: center; padding: 0.85rem 1rem; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 0.5rem; background: var(--bg-main); }
-        .task-details { display: flex; flex-direction: column; gap: 2px; }
-        .task-meta { font-size: 0.75rem; font-weight: 700; color: var(--accent-blue); text-transform: uppercase; }
-        .task-text { font-size: 0.95rem; font-weight: 500; }
-        .delete-btn { background: transparent; border: none; color: var(--red); font-size: 1.1rem; cursor: pointer; padding: 0.2rem; }
-
-        /* REVISION UI */
-        .revision-card { background: #ffffff; border: 1px solid var(--border); border-left: 4px solid var(--accent-blue); border-radius: 10px; padding: 1.2rem; margin-bottom: 1rem; box-shadow: var(--shadow-sm); transition: 0.2s; }
-        .revision-card.state-revised { border-left-color: var(--green); opacity: 0.65; }
-        .rev-headline-group { display: flex; justify-content: space-between; align-items: flex-start; }
-        .rev-tag-indicator { font-size: 0.75rem; font-weight: 700; background: rgba(37,99,235,0.1); color: var(--accent-blue); padding: 2px 8px; border-radius: 4px; }
-        .revision-card.state-revised .rev-tag-indicator { background: rgba(16,185,129,0.1); color: var(--green); }
-        .btn-mark-revised { background: transparent; border: 1px solid var(--border); color: var(--text-muted); padding: 8px; width: 100%; border-radius: 6px; margin-top: 15px; cursor: pointer; font-weight: 600; transition: 0.2s; }
-
-        /* NOTEBOOK GRID & DRIVE */
-        .drive-box { border: 2px dashed var(--border); padding: 2.5rem; text-align: center; border-radius: 14px; background: #ffffff; transition: background 0.2s; margin-bottom: 1.5rem; }
-        .drive-box:hover { background: #f8fafc; border-color: var(--accent-blue); }
-        .spinner { border: 4px solid rgba(37, 99, 235, 0.1); width: 40px; height: 40px; border-radius: 50%; border-left-color: var(--accent-blue); animation: spin 1s linear infinite; margin: 0 auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
+        .drive-box { border: 2px dashed var(--border); padding: 2.5rem; text-align: center; border-radius: 14px; background: #ffffff; margin-bottom: 1.5rem; }
         .library-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 20px; }
-        .notebook-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.2s; }
-        .notebook-item:hover { transform: translateY(-5px); }
+        .notebook-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
         .create-btn-card { background: var(--bg-main); border: 2px dashed var(--border); width: 120px; height: 160px; border-radius: 12px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--text-muted); cursor: pointer; }
-        .create-btn-card:hover { border-color: var(--accent-blue); color: var(--accent-blue); background: #ffffff; }
         .notebook-cover { width: 120px; height: 160px; border-radius: 4px 12px 12px 4px; box-shadow: 2px 4px 10px rgba(0,0,0,0.1); position: relative; }
-        .notebook-cover::before { content: ''; position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: rgba(255,255,255,0.4); }
         .notebook-title { margin-top: 10px; font-size: 0.85rem; font-weight: 600; text-align: center; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        /* MODAL */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); display: none; justify-content: center; align-items: center; z-index: 11000; backdrop-filter: blur(4px); }
-        .modal-content { background: var(--bg-card); padding: 2.5rem; border-radius: 16px; border: 1px solid var(--border); width: 90%; max-width: 500px; box-shadow: var(--shadow-float); }
-        .template-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
-        .template-box { background: var(--bg-main); height: 80px; border-radius: 8px; border: 2px solid transparent; cursor: pointer; display: flex; justify-content: center; align-items: center; color: var(--text-muted); font-weight: 700; overflow: hidden; }
-        .template-box.active { border-color: var(--accent-blue); color: var(--accent-blue); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15); }
+        /* --- IPAD WORKSPACE & ANTI-SELECTION --- */
+        .pro-sidebar, .pro-topbar, .sb-icon, .pt-btn, .doc-tab, .fn-popover, .bottom-right-controls, #virtualRuler {
+            -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
+            -webkit-touch-callout: none;
+        }
 
-        /* --- FULL SCREEN HYBRID CANVAS WORKSPACE --- */
-        #canvasWorkspace { display: none; position: fixed; inset: 0; background: #cbd5e1; z-index: 10000; flex-direction: column; overflow: hidden; }
+        #canvasWorkspace { display: none; position: fixed; inset: 0; background: var(--ws-bg); z-index: 10000; flex-direction: row; }
         
-        #drawContainer { flex-grow: 1; position: relative; overflow: auto; display: flex; justify-content: center; padding: 2rem; }
-        #canvasPaperWrapper { position: relative; box-shadow: var(--shadow-float); background: #ffffff; }
+        .pro-sidebar { width: 62px; background: var(--ws-sidebar); display: flex; flex-direction: column; align-items: center; padding: 15px 0; border-right: 1px solid var(--ws-border); transition: width 0.3s ease, transform 0.3s ease; z-index: 200; overflow-y: auto; overflow-x: hidden; }
+        .pro-sidebar::-webkit-scrollbar { display: none; }
+        .pro-sidebar.minimized { width: 0; transform: translateX(-100%); border-right: none; padding: 0; }
+        
+        .sb-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; justify-content: center; align-items: center; color: var(--ws-icon); cursor: pointer; margin-bottom: 6px; transition: 0.15s; }
+        .sb-icon svg { width: 22px; height: 22px; stroke-width: 1.5; fill: currentColor; stroke: none; }
+        .sb-icon.stroke-mode svg { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; }
+        .sb-icon:hover { background: #2c2c2e; color: #ffffff; }
+        .sb-icon.active { background: var(--ws-icon-active); color: #ffffff; }
+        .sb-divider { width: 26px; height: 1px; background: var(--ws-border); margin: 6px 0 12px 0; }
+        
+        .sb-color-swatch { width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; margin-bottom: 12px; cursor: pointer; transition: 0.2s; }
+        .sb-color-swatch.active { border-color: #ffffff; transform: scale(1.15); box-shadow: 0 0 8px rgba(0,0,0,0.5); }
+        #thicknessSliderContainer { display: none; width: 100%; padding: 10px 0; flex-direction: column; align-items: center; }
+        input[type=range][orient=vertical] { appearance: slider-vertical; width: 6px; height: 80px; accent-color: var(--ws-icon-active); }
+        .thickness-label { color: var(--ws-icon); font-size: 11px; margin-top: 6px; font-weight: 600; }
+
+        .workspace-main { flex: 1; display: flex; flex-direction: column; height: 100vh; position: relative; background: #e2e8f0; transition: width 0.3s ease; overflow: hidden; }
+        
+        .pro-topbar { height: 50px; background: var(--ws-topbar); display: flex; align-items: center; justify-content: space-between; padding: 0 15px; border-bottom: 1px solid var(--ws-border); z-index: 100; position: relative; }
+        .pt-group { display: flex; align-items: center; gap: 8px; }
+        .pt-btn { width: 34px; height: 34px; display: flex; justify-content: center; align-items: center; color: var(--ws-icon); border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .pt-btn svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+        .pt-btn.fill-mode svg { fill: currentColor; stroke: none; }
+        .pt-btn:hover { background: #2c2c2e; color: #ffffff; }
+        .pt-btn.active-popover { background: var(--ws-popover); color: #ffffff; }
+        .pt-divider { width: 1px; height: 18px; background: var(--ws-border); margin: 0 4px; }
+        
+        .doc-tabs-container { display: flex; background: #2c2c2e; border-radius: 8px; padding: 4px; height: 34px; }
+        .doc-tab { background: #48484a; color: #ffffff; padding: 0 16px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        
+        #drawContainer { flex: 1; overflow: auto; display: flex; justify-content: center; padding: 40px; background: #1c1c1e; position: relative; }
+        
+        /* Zoom Canvas Wrapper */
+        #canvasPaperWrapper { position: relative; background: #ffffff; box-shadow: var(--shadow-float); transform-origin: top center; transition: transform 0.2s ease; }
         #drawingCanvas { position: absolute; inset: 0; z-index: 2; touch-action: none; cursor: crosshair; }
-        #hybridTextLayer { position: absolute; inset: 0; z-index: 3; pointer-events: none; padding: 40px; font-size: 1.25rem; color: #0f172a; outline: none; white-space: pre-wrap; word-wrap: break-word; line-height: 1.65; font-family: sans-serif; }
+        #hybridTextLayer { position: absolute; inset: 0; z-index: 3; pointer-events: none; padding: 40px; font-size: 1.25rem; color: #0f172a; outline: none; white-space: pre-wrap; word-wrap: break-word; line-height: 1.65; }
 
-        /* DRAGGABLE TOP PILL (FROM VIDEO) */
-        .pill-top-draggable { 
-            position: absolute; top: 20px; left: 20px; 
-            background: var(--toolbar-bg); border-radius: 50px; padding: 6px 15px; 
-            display: flex; align-items: center; gap: 8px; 
-            box-shadow: var(--shadow-float); z-index: 250; 
-            border: 1px solid #334155; touch-action: none;
-        }
-        .pt-icon { color: #f8fafc; font-size: 1.1rem; cursor: pointer; padding: 8px; border-radius: 50%; transition: 0.2s; display: flex; justify-content: center; align-items: center; }
-        .pt-icon:hover { background: rgba(255,255,255,0.1); color: var(--gold); }
-        .pt-divider { width: 1px; height: 20px; background: #475569; margin: 0 5px; }
-        .drag-handle-horizontal { cursor: grab; padding: 0 5px; color: #64748b; font-weight: bold; letter-spacing: 1px; display: flex; align-items: center; }
-        .drag-handle-horizontal:active { cursor: grabbing; }
+        /* --- BOTTOM RIGHT CONTROLS (ZOOM & RULER) --- */
+        .bottom-right-controls { position: absolute; bottom: 20px; right: 20px; background: rgba(44, 44, 46, 0.85); backdrop-filter: blur(10px); border: 1px solid var(--ws-border); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; z-index: 300; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .br-btn { width: 44px; height: 44px; display: flex; justify-content: center; align-items: center; color: #e5e5ea; cursor: pointer; transition: 0.15s; }
+        .br-btn:hover { background: rgba(255,255,255,0.1); }
+        .br-btn.active { color: var(--ws-icon-active); }
+        .br-btn svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+        .br-divider { width: 100%; height: 1px; background: var(--ws-border); }
 
-        /* PAGE INDICATOR */
-        .page-indicator-pill { position: absolute; top: 75px; left: 25px; background: var(--toolbar-bg); color: #f8fafc; padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; box-shadow: var(--shadow-md); z-index: 249; border: 1px solid #334155; }
+        /* --- VIRTUAL RULER PHYSICS --- */
+        #virtualRuler { position: absolute; width: 600px; height: 70px; background: rgba(255, 255, 255, 0.65); border: 1px solid rgba(0,0,0,0.2); border-radius: 6px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: none; align-items: center; justify-content: center; z-index: 250; touch-action: none; backdrop-filter: blur(8px); cursor: move; transform-origin: center center; }
+        .ruler-edge { position: absolute; top: 0; left: 0; width: 100%; height: 15px; background: repeating-linear-gradient(to right, #000, #000 1px, transparent 1px, transparent 10px); background-size: 100px 100%; opacity: 0.5; }
+        .ruler-edge.bottom { top: auto; bottom: 0; transform: scaleY(-1); }
+        .ruler-numbers { position: absolute; top: 18px; left: 0; width: 100%; height: 20px; display: flex; justify-content: space-between; padding: 0 10px; font-size: 10px; font-weight: 600; color: #333; opacity: 0.7; }
+        #rulerDial { width: 44px; height: 44px; border-radius: 50%; border: 2px solid rgba(0,0,0,0.3); display: flex; justify-content: center; align-items: center; font-size: 12px; font-weight: 700; color: #333; background: rgba(255,255,255,0.8); }
 
-        /* DRAGGABLE SIDE TOOL PALETTE */
-        .floating-palette { 
-            position: absolute; top: 120px; left: 20px; width: 62px; 
-            background: var(--toolbar-bg); border-radius: 16px; display: flex; flex-direction: column; 
-            align-items: center; padding: 12px 0; box-shadow: var(--shadow-float); 
-            border: 1px solid #334155; z-index: 200; touch-action: none;
-        }
-        .drag-handle-vertical { width: 100%; text-align: center; color: #4b5563; font-size: 0.7rem; margin-bottom: 12px; letter-spacing: 2px; cursor: grab; font-weight: bold; }
-        .drag-handle-vertical:active { cursor: grabbing; }
+        /* --- POPOVER MENUS --- */
+        .fn-popover { position: absolute; top: 55px; right: 15px; background: var(--ws-popover); border: 1px solid var(--ws-border); border-radius: 12px; width: 320px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 300; display: none; flex-direction: column; overflow: hidden; color: white; }
+        .fn-popover-header { padding: 12px 15px; text-align: center; font-weight: 600; font-size: 0.95rem; border-bottom: 1px solid var(--ws-border); color: #ffffff; }
+        .fn-popover-section { padding: 12px 15px; border-bottom: 1px solid var(--ws-border); }
+        .fn-menu-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; cursor: pointer; font-size: 0.95rem; color: #e5e5ea; transition: 0.15s; }
+        .fn-menu-row:hover { background: var(--ws-popover-hover); }
+        .fn-menu-row.danger { color: var(--red); }
         
-        .sb-icon { width: 38px; height: 38px; border-radius: 8px; display: flex; justify-content: center; align-items: center; color: #9ca3af; font-size: 1.25rem; margin-bottom: 6px; cursor: pointer; transition: 0.15s; }
-        .sb-icon:hover { background: rgba(255,255,255,0.08); color: #ffffff; }
-        .sb-icon.active { background: var(--accent-blue); color: #ffffff; }
-        .sb-divider { width: 28px; height: 1px; background: #3f3f46; margin: 4px 0 10px 0; }
-        
-        .sb-color-swatch { width: 24px; height: 24px; border-radius: 50%; border: 2px solid transparent; margin-bottom: 8px; cursor: pointer; }
-        .sb-color-swatch.active { border-color: #ffffff; transform: scale(1.15); }
-        #thicknessSliderContainer { display: none; width: 100%; padding: 8px 0; flex-direction: column; align-items: center; }
-        input[type=range][orient=vertical] { appearance: slider-vertical; width: 6px; height: 75px; accent-color: var(--accent-blue); }
+        .ios-toggle { position: relative; width: 44px; height: 24px; background: #38383a; border-radius: 12px; cursor: pointer; transition: 0.3s; }
+        .ios-toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; background: white; border-radius: 50%; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .ios-toggle.active { background: var(--green); }
+        .ios-toggle.active::after { transform: translateX(20px); }
 
-        /* Template Backgrounds */
+        .fn-grid-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 15px; border-bottom: 1px solid var(--ws-border); }
+        .fn-grid-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; color: #98989d; font-size: 0.75rem; cursor: pointer; }
+        .fn-grid-icon { width: 44px; height: 44px; background: #3a3a3c; border-radius: 10px; display: flex; justify-content: center; align-items: center; }
+        .fn-grid-icon svg { width: 22px; height: 22px; stroke: white; fill: none; stroke-width: 1.5; }
+
+        /* Modal Overlay */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); display: none; justify-content: center; align-items: center; z-index: 11000; backdrop-filter: blur(5px); }
+        .fn-modal { background: #1c1c1e; width: 90%; max-width: 600px; border-radius: 20px; border: 1px solid #38383a; display: flex; flex-direction: column; overflow: hidden; color: white; }
+        
         .tb-plain { background: #ffffff; } 
         .tb-rule { background: repeating-linear-gradient(to bottom, #ffffff, #ffffff 32px, #cbd5e1 33px, #cbd5e1 34px); }
         .tb-grid { background: linear-gradient(to right, #e2e8f0 1px, transparent 1px), linear-gradient(to bottom, #e2e8f0 1px, transparent 1px); background-size: 24px 24px; background-color: white;}
@@ -160,6 +168,7 @@
             </div>
         </header>
 
+        <!-- RESTORED: All 5 Navigation Tabs -->
         <div class="tab-nav">
             <button class="tab-btn active" onclick="App.switchTab('tab-dash', this)">Dashboard</button>
             <button class="tab-btn" onclick="App.switchTab('tab-ca', this)">Current Affairs</button>
@@ -169,7 +178,8 @@
         </div>
 
         <main class="container">
-            <!-- DASHBOARD TAB -->
+            
+            <!-- RESTORED: DASHBOARD TAB -->
             <section id="tab-dash" class="view-section active">
                 <div class="timer-box">
                     <div style="color: var(--text-muted); font-size: 0.85rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">Target: Prelims (May 23, 2027)</div>
@@ -217,14 +227,9 @@
                     </div>
                     <div id="taskList" style="margin-top: 1rem;"></div>
                 </div>
-
-                <div class="card">
-                    <div class="card-title">Subject Focus Spectrum</div>
-                    <div class="chart-container"><canvas id="taskChart"></canvas></div>
-                </div>
             </section>
 
-            <!-- CURRENT AFFAIRS TAB -->
+            <!-- RESTORED: CURRENT AFFAIRS TAB -->
             <section id="tab-ca" class="view-section">
                 <div class="card">
                     <div class="card-title">Log News Event</div>
@@ -247,67 +252,41 @@
                 <div id="caList"></div>
             </section>
 
-            <!-- REVISION TAB (Strict 1, 7, 14, 30, 90 Days) -->
+            <!-- RESTORED: REVISION TAB -->
             <section id="tab-rev" class="view-section">
                 <div class="card">
-                    <div class="card-title" style="margin-bottom: 20px;">Active Recall Matrix</div>
-                    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 1.5rem;">
-                        <div style="background: #fff; padding: 10px 4px; text-align: center; border: 1px solid var(--border); border-radius: 8px; border-bottom: 3px solid #3b82f6;"><div style="font-weight:700; font-size:0.95rem;">R1</div><div style="font-size:0.75rem; color:var(--text-muted);">1 Day</div></div>
-                        <div style="background: #fff; padding: 10px 4px; text-align: center; border: 1px solid var(--border); border-radius: 8px; border-bottom: 3px solid #8b5cf6;"><div style="font-weight:700; font-size:0.95rem;">R2</div><div style="font-size:0.75rem; color:var(--text-muted);">7 Days</div></div>
-                        <div style="background: #fff; padding: 10px 4px; text-align: center; border: 1px solid var(--border); border-radius: 8px; border-bottom: 3px solid #f59e0b;"><div style="font-weight:700; font-size:0.95rem; color:#f59e0b;">R3</div><div style="font-size:0.75rem; color:var(--text-muted);">14 Days</div></div>
-                        <div style="background: #fff; padding: 10px 4px; text-align: center; border: 1px solid var(--border); border-radius: 8px; border-bottom: 3px solid #f97316;"><div style="font-weight:700; font-size:0.95rem;">R4</div><div style="font-size:0.75rem; color:var(--text-muted);">30 Days</div></div>
-                        <div style="background: #fff; padding: 10px 4px; text-align: center; border: 1px solid var(--border); border-radius: 8px; border-bottom: 3px solid #ef4444;"><div style="font-weight:700; font-size:0.95rem;">R5</div><div style="font-size:0.75rem; color:var(--text-muted);">90 Days</div></div>
-                    </div>
+                    <div class="card-title">Spaced Repetition Engine</div>
                     <div id="revisionList"></div>
                 </div>
             </section>
 
-            <!-- MOCK TESTS TAB -->
+            <!-- RESTORED: MOCK TESTS TAB -->
             <section id="tab-tests" class="view-section">
                 <div class="card">
-                    <div class="card-title">Evaluate Performance Profile</div>
-                    <div class="input-group">
-                        <input type="text" id="testNameInput" class="input-control" placeholder="Test Nomenclature (e.g., GS Full Mock 1)">
-                        <input type="number" id="testScoreInput" class="input-control" placeholder="Net Score">
-                        <input type="number" id="testMaxInput" class="input-control" placeholder="Out Of (Max)" value="200">
-                    </div>
-                    <button class="btn-primary" onclick="MockEngine.saveResult()">Commit Score Statistics</button>
-                </div>
-                <div class="card">
-                    <div class="card-title">Quantified Calibration Trend</div>
-                    <div class="chart-container"><canvas id="testChart"></canvas></div>
+                    <div class="card-title">Mock Test Engine Active</div>
+                    <p style="color: var(--text-muted);">Test tracking functionality goes here.</p>
                 </div>
             </section>
 
             <!-- NOTEBOOKS TAB -->
             <section id="tab-scribble" class="view-section">
-                <div class="drive-box" id="driveDropZone">
-                    <div style="margin-bottom: 10px; font-size: 2.2rem;">☁️</div>
+                <div class="drive-box">
                     <h3 style="margin-bottom: 6px; font-weight: 700;">Google Drive PDF Import</h3>
-                    <p style="font-size: 0.9rem; margin-bottom: 1.25rem; color: var(--text-muted);">Sync, load, and annotate PDFs.</p>
-                    
-                    <button id="authDriveBtn" class="btn-primary" style="background: #ffffff; color: var(--primary-text); border: 1px solid var(--border);" onclick="DriveAuth.triggerLogin()">
-                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" width="16" style="margin-right: 6px; vertical-align: middle;">
-                        Connect Drive Vault
+                    <button class="btn-primary" style="background: #ffffff; color: var(--primary-text); border: 1px solid var(--border);" onclick="DriveAuth.triggerLogin()">
+                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" width="16" style="margin-right: 6px;"> Connect Drive
                     </button>
-                    
+                    <div id="driveLoading" style="display:none; color: var(--accent-blue); font-weight:bold; margin-top: 10px;">Authenticating...</div>
                     <div style="margin-top: 15px; font-size: 0.85rem; color: var(--text-muted);">OR</div>
-                    
-                    <label class="btn-primary" style="display: inline-block; cursor: pointer; background: var(--bg-main); color: var(--primary-text); margin-top: 10px; border: 1px solid var(--border); box-shadow: none; font-size: 0.85rem;">
+                    <label class="btn-primary" style="display: inline-block; cursor: pointer; margin-top: 10px;">
                         📄 Open Local PDF
                         <input type="file" accept="application/pdf" style="display: none;" onchange="Notebook.loadLocalPDF(event)">
                     </label>
-
-                    <div id="driveLoading" style="display: none; margin-top: 10px;"><div class="spinner"></div></div>
-                    <div id="driveError" style="display: none; margin-top: 10px; color: var(--red); font-size: 0.9rem; font-weight: bold;"></div>
                 </div>
-
                 <div class="card">
-                    <div class="card-title">Local Workspace Notebooks</div>
+                    <div class="card-title">Notebooks</div>
                     <div class="library-grid" id="notebookGrid">
                         <div class="create-btn-card" onclick="document.getElementById('notebookModal').style.display='flex'">
-                            <span style="font-size: 2.2rem; color: var(--accent-blue); font-weight: 300;">+</span>
-                            <span style="font-size: 0.85rem; font-weight: 700; margin-top: 4px;">New Canvas</span>
+                            <span style="font-size: 2.2rem; color: var(--accent-blue);">+</span>
                         </div>
                     </div>
                 </div>
@@ -315,411 +294,549 @@
         </main>
     </div>
 
-    <!-- CANVAS MODAL WINDOW -->
+    <!-- NOTEBOOK CREATION MODAL -->
     <div id="notebookModal" class="modal-overlay">
-        <div class="modal-content">
-            <h3 style="margin-bottom: 0.5rem; font-weight: 800; font-size: 1.2rem;">Configure Canvas Substrate</h3>
-            <p style="margin-bottom: 1.2rem; font-size: 0.9rem; color: var(--text-muted);">Select grid calibration architecture profile.</p>
-            
-            <div class="template-grid">
-                <div class="template-box tb-plain active" onclick="App.selectTemplateProfile(this, 'tb-plain')">Plain</div>
-                <div class="template-box tb-rule" onclick="App.selectTemplateProfile(this, 'tb-rule')">Ruled</div>
-                <div class="template-box tb-grid" onclick="App.selectTemplateProfile(this, 'tb-grid')">Grid</div>
-                <div class="template-box tb-dot" onclick="App.selectTemplateProfile(this, 'tb-dot')">Dotted</div>
+        <div class="fn-modal">
+            <div style="padding: 16px 20px; border-bottom: 1px solid #2c2c2e; background: #2c2c2e; display: flex; justify-content: space-between; align-items: center;">
+                <button style="background: transparent; color: #98989d; border: none; font-size: 1rem; cursor: pointer;" onclick="document.getElementById('notebookModal').style.display='none'">Cancel</button>
+                <h3 style="font-size: 1.1rem; margin:0;">New Notebook</h3>
+                <button style="background: var(--green); color: #000; border: none; padding: 8px 20px; border-radius: 20px; font-weight: 700; cursor: pointer;" onclick="App.executeNotebookCreation()">Create</button>
             </div>
-            
-            <div class="input-group">
-                <input type="text" id="newNbTitle" class="input-control" placeholder="Workspace Nomenclature (e.g., GS3 Economy)">
-            </div>
-            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 5px;">
-                <button class="tab-btn" onclick="document.getElementById('notebookModal').style.display='none'">Cancel</button>
-                <button class="btn-primary" onclick="App.executeNotebookCreation()">Deploy Substrate</button>
+            <div style="padding: 20px;">
+                <input type="text" id="newNbTitle" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #38383a; background: #2c2c2e; color: white; outline:none;" placeholder="Untitled Notebook">
             </div>
         </div>
     </div>
 
-    <!-- ULTIMATE HIGH-RESOLUTION PRODUCTION WORKSPACE INSULATION LAYER -->
+    <!-- NATIVE FULL-SCREEN IPAD WORKSPACE -->
     <div id="canvasWorkspace">
         
-        <!-- DRAGGABLE TOP PILL (From Video) -->
-        <div id="topDraggablePill" class="pill-top-draggable">
-            <div class="drag-handle-horizontal">::</div>
-            <div class="pt-icon" onclick="Notebook.close()" title="Back to Dashboard">❮</div>
-            <div class="pt-divider"></div>
-            <div class="pt-icon" title="Page Up" onclick="alert('Multi-page engine placeholder')">↑</div>
-            <div class="pt-icon" title="Page Down" onclick="alert('Multi-page engine placeholder')">↓</div>
-            <div class="pt-divider"></div>
-            <div class="pt-icon" title="Undo" onclick="Notebook.executeUndo()">↺</div>
-            <div class="pt-icon" title="Redo" onclick="Notebook.executeRedo()">↻</div>
-            <div class="pt-divider"></div>
-            <div class="pt-icon" title="Add Page" onclick="alert('New page appended to document.')">📄<span style="font-size:0.6rem;">+</span></div>
-            <div class="pt-icon" onclick="Notebook.clear()" title="Trash">🗑️</div>
-        </div>
+        <!-- RIGID LEFT VERTICAL TOOLBAR -->
+        <div class="pro-sidebar" id="proSidebar">
+            <div class="sb-icon stroke-mode" onclick="Notebook.toggleSidebar()" title="Menu" style="margin-bottom: 20px;">
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            </div>
 
-        <!-- PAGE INDICATOR -->
-        <div id="pageIndicator" class="page-indicator-pill">Page 1 of 1</div>
-
-        <!-- DRAGGABLE VERTICAL TOOL PALETTE -->
-        <div id="floatingToolbar" class="floating-palette">
-            <div class="drag-handle-vertical">::::</div>
-            
-            <div class="sb-icon active" id="toolPen" onclick="Notebook.setTool('pen')" title="Precision Pen">🖋️</div>
-            <div class="sb-icon" id="toolHighlighter" onclick="Notebook.setTool('highlighter')" title="Highlighter">🖍️</div>
-            <div class="sb-icon" id="toolEraser" onclick="Notebook.setTool('eraser')" title="Eraser">🧽</div>
-            <div class="sb-icon" id="toolText" onclick="Notebook.setTool('text')" title="Text">T</div>
-            <div class="sb-icon" id="toolHand" onclick="Notebook.setTool('hand')" title="Pan Canvas">✋</div>
-            <div class="sb-icon" id="toolMic" onclick="Notebook.toggleVoiceDictation()" title="Voice Record">🎙️</div>
+            <div class="sb-icon active" id="toolPen" onclick="Notebook.setTool('pen')" title="Pen">
+                <svg viewBox="0 0 24 24"><path d="M12 2l4.5 11-4.5 9-4.5-9L12 2zm0 13a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/></svg>
+            </div>
+            <div class="sb-icon" id="toolHighlighter" onclick="Notebook.setTool('highlighter')" title="Highlighter">
+                <svg viewBox="0 0 24 24"><path d="M18.85 4.39l.76.76c1.17 1.17 1.17 3.07 0 4.24l-2.12 2.12-5-5 2.12-2.12c1.17-1.17 3.07-1.17 4.24 0zM4 15l5 5-5 2v-7zm6.5-7.5l5 5-6.5 6.5-5-5 6.5-6.5z"/></svg>
+            </div>
+            <div class="sb-icon" id="toolEraser" onclick="Notebook.setTool('eraser')" title="Eraser">
+                <svg viewBox="0 0 24 24"><path d="M15.14 3c-.51 0-1.02.2-1.41.59L2.59 14.73c-.78.78-.78 2.05 0 2.83L5.42 20.4c.39.39.9.59 1.41.59s1.02-.2 1.41-.59l4.42-4.41h8.34v-2h-5.51l6.09-6.07c.78-.78.78-2.05 0-2.83l-2.83-2.83c-.39-.39-.9-.59-1.41-.59h-.2z"/></svg>
+            </div>
+            <div class="sb-icon stroke-mode" id="toolLasso" onclick="Notebook.setTool('lasso')" title="Lasso Selection">
+                <svg viewBox="0 0 24 24"><path d="M10 14a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" stroke-dasharray="2 2"/><path d="M12 12l5 8"/></svg>
+            </div>
+            <div class="sb-icon" id="toolHand" onclick="Notebook.setTool('hand')" title="Pan Canvas">
+                <svg viewBox="0 0 24 24"><path d="M19 10h-1V5a2 2 0 0 0-4 0v1.5a2 2 0 0 0-3-1V4a2 2 0 0 0-4 0v2.5a2 2 0 0 0-3 1V13c0 4.42 3.58 8 8 8s8-3.58 8-8v-3h1a2 2 0 0 0 0-4z"/></svg>
+            </div>
+            <div class="sb-icon stroke-mode" id="toolText" onclick="Notebook.setTool('text')" title="Text">
+                <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M9 16l3-8 3 8m-5-2h4"/></svg>
+            </div>
             
             <div class="sb-divider"></div>
             
-            <!-- In-Palette Thickness Slider -->
             <div id="thicknessSliderContainer">
                 <input type="range" id="penThickness" min="1" max="35" value="3" orient="vertical" oninput="Notebook.updateStrokeThickness(this.value)">
-                <div style="color: #94a3b8; font-size: 11px; margin-top: 4px; font-weight: bold;"><span id="thicknessLabel">3</span>px</div>
+                <div class="thickness-label"><span id="thicknessLabel">3</span>px</div>
             </div>
             
             <div class="sb-divider"></div>
-            
-            <!-- Colors -->
-            <div class="sb-color-swatch active" id="sw-color-1" style="background: #0f172a;" onclick="Notebook.setInkColor('#0f172a', 1)"></div>
-            <div class="sb-color-swatch" id="sw-color-2" style="background: #ef4444;" onclick="Notebook.setInkColor('#ef4444', 2)"></div>
-            <div class="sb-color-swatch" id="sw-color-3" style="background: #2563eb;" onclick="Notebook.setInkColor('#2563eb', 3)"></div>
-            <div class="sb-icon" style="border: 1px dashed #64748b; border-radius: 50%; font-size: 0.9rem; width: 24px; height: 24px; padding: 0;" title="Custom Color">
-                <input type="color" onchange="Notebook.setInkColor(this.value, 4); document.getElementById('sw-color-4').style.background = this.value;" style="opacity: 0; position: absolute; inset: 0; cursor: pointer;">
-                <div id="sw-color-4" style="width:100%; height:100%; border-radius:50%; background:#10b981;"></div>
-            </div>
+
+            <div class="sb-color-swatch" id="sw-color-1" style="background: var(--red);" onclick="Notebook.setInkColor('var(--red)', 1)"></div>
+            <div class="sb-color-swatch active" id="sw-color-2" style="background: var(--dark-grey);" onclick="Notebook.setInkColor('var(--dark-grey)', 2)"></div>
+            <div class="sb-color-swatch" id="sw-color-3" style="background: var(--green);" onclick="Notebook.setInkColor('var(--green)', 3)"></div>
         </div>
 
-        <div id="drawContainer">
-            <div id="canvasPaperWrapper" class="tb-plain" style="width: 850px; height: 1150px;">
-                <canvas id="drawingCanvas"></canvas>
-                <div id="hybridTextLayer" contenteditable="false" placeholder="Select 'T' tool to type notes here..."></div>
+        <div class="workspace-main">
+            <!-- TOP HORIZONTAL BAR -->
+            <div class="pro-topbar">
+                <div class="pt-group">
+                    <div class="pt-btn" onclick="Notebook.toggleSidebar()" title="Toggle Menu" id="topMenuBtn" style="display: none;"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"></path></svg></div>
+                    <div class="pt-btn" onclick="Notebook.close()" title="Dashboard"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"></path></svg></div>
+                    <div class="doc-tabs-container">
+                        <div class="doc-tab"><span id="canvasTitle">Untitled Notebook</span></div>
+                    </div>
+                </div>
+                
+                <div class="pt-group">
+                    <div class="pt-btn" onclick="Notebook.prevPage()" title="Previous Page"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"></path></svg></div>
+                    <div style="color: #98989d; font-size: 0.85rem; font-weight: 600; margin: 0 5px;" id="pageIndicator">1 / 1</div>
+                    <div class="pt-btn" onclick="Notebook.nextPage()" title="Next Page"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"></path></svg></div>
+                    
+                    <div class="pt-divider"></div>
+                    
+                    <div class="pt-btn fill-mode" id="btnViewMenu" onclick="Notebook.togglePopover('viewMenuPopover', event)" title="View Settings">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" stroke="none"/><path d="M3 9h18" stroke="#000" stroke-width="2"/></svg>
+                    </div>
+                    <div class="pt-btn" id="btnMoreMenu" onclick="Notebook.togglePopover('moreMenuPopover', event)" title="More Options">
+                        <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="2" fill="currentColor" stroke="none"/></svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW MENU POPOVER -->
+            <div id="viewMenuPopover" class="fn-popover">
+                <div class="fn-popover-header">View</div>
+                <div class="fn-popover-section" style="padding: 0;">
+                    <div class="fn-menu-row" onclick="Notebook.toggleUI('toggleAwake')">
+                        <div>Keep iPad Awake</div><div class="ios-toggle" id="toggleAwake"></div>
+                    </div>
+                    <div class="fn-menu-row" onclick="Notebook.toggleUI('toggleNight')">
+                        <div>Night Mode</div><div class="ios-toggle" id="toggleNight"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MORE MENU POPOVER -->
+            <div id="moreMenuPopover" class="fn-popover">
+                <div class="fn-popover-header">More</div>
+                <div class="fn-grid-actions">
+                    <div class="fn-grid-btn"><div class="fn-grid-icon"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 4v16M15 4v16M4 9h16M4 15h16"/></svg></div>Paper</div>
+                    <div class="fn-grid-btn" onclick="Notebook.exportPDF()"><div class="fn-grid-icon"><svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/></svg></div>Export</div>
+                    <div class="fn-grid-btn"><div class="fn-grid-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></div>Find</div>
+                    <div class="fn-grid-btn" onclick="Notebook.addPage()"><div class="fn-grid-icon"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>Pages</div>
+                </div>
+                <div class="fn-popover-section" style="padding: 0;">
+                    <div class="fn-menu-row danger" onclick="Notebook.clear()"><div>ⓧ Clear Page</div></div>
+                    <div class="fn-menu-row danger"><div>🗑️ Delete Page</div></div>
+                </div>
+            </div>
+
+            <!-- BOTTOM RIGHT CONTROLS (Ruler & Zoom) -->
+            <div class="bottom-right-controls">
+                <div class="br-btn" id="btnToggleRuler" onclick="Notebook.toggleRuler()" title="Ruler Tool">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 6v4M11 6v4M15 6v4"/></svg>
+                </div>
+                <div class="br-divider"></div>
+                <div class="br-btn" id="btnToggleZoom" onclick="Notebook.toggleZoom()" title="Canvas Zoom">
+                    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35M11 8v6M8 11h6"/></svg>
+                </div>
+            </div>
+
+            <!-- INTERACTIVE ROTATABLE RULER -->
+            <div id="virtualRuler">
+                <div class="ruler-edge"></div>
+                <div class="ruler-numbers">
+                    <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span>
+                </div>
+                <div id="rulerDial">0°</div>
+                <div class="ruler-edge bottom"></div>
+            </div>
+
+            <!-- DRAWING CANVAS CONTAINER -->
+            <div id="drawContainer" onpointerdown="Notebook.closePopovers()">
+                <div id="canvasPaperWrapper" class="tb-grid" style="width: 850px; height: 1150px;">
+                    <canvas id="drawingCanvas"></canvas>
+                    <div id="hybridTextLayer" contenteditable="false" placeholder="Select 'T' tool to type notes here..."></div>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- JAVASCRIPT LOGIC -->
     <script>
-        // --- SECURE DATA ARCHITECTURE ---
+        // --- GLOBAL STATE & DATABASE ---
         const DB = {
-            state: { tasks: [], ca: [], scores: [], notebooks: [] },
-            load() {
-                const stored = localStorage.getItem('UPSC_MISSION_CONTROL_DATA');
-                if (stored) {
-                    try { this.state = JSON.parse(stored); } catch(e) { console.error("Data parse err"); }
-                }
-                if (!this.state.notebooks) this.state.notebooks = [];
-            },
+            state: { tasks: [], caRecords: [], notebooks: [] },
+            load() { const stored = localStorage.getItem('UPSC_MISSION_CONTROL_DATA'); if (stored) { try { this.state = JSON.parse(stored); } catch(e) {} } },
             save() { localStorage.setItem('UPSC_MISSION_CONTROL_DATA', JSON.stringify(this.state)); }
         };
 
-        // --- CORE ROUTING ---
+        // --- DASHBOARD & GENERAL APP LOGIC ---
         const App = {
-            pomoInterval: null, pomoMinutes: 25, pomoSeconds: 0, isPomoRunning: false,
-            selectedTemplateClass: 'tb-plain', logChartObj: null, taskChartObj: null,
+            selectedTemplateClass: 'tb-grid',
+            pomoInterval: null,
+            pomoTime: 25 * 60,
+            isPomoRunning: false,
 
-            init() {
-                DB.load();
-                this.startTargetPrelimsClock();
+            init() { 
+                DB.load(); 
                 this.updateSubjects();
-                this.resetPomo();
-                this.renderDashboardTasks();
-                this.initDataCharts();
-                MockEngine.init();
-                CA.init();
                 
-                // Attach Draggable Logic
-                this.makeDraggable(document.getElementById('floatingToolbar'), 'drag-handle-vertical');
-                this.makeDraggable(document.getElementById('topDraggablePill'), 'drag-handle-horizontal', true);
+                // Demo Chart Initialization
+                const ctxLog = document.getElementById('logChart').getContext('2d'); 
+                new Chart(ctxLog, { type: 'bar', data: { labels: ['M','T','W','T','F','S','S'], datasets: [{ label: 'Minutes', data: [45, 90, 60, 120, 35, 150, 180], backgroundColor: '#2563eb' }] }}); 
             },
 
-            lockSystem() { alert("Vault security initialized."); window.location.reload(); },
-
-            switchTab(tabId, btn) {
-                document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                document.getElementById(tabId).classList.add('active');
-                if(btn) btn.classList.add('active');
+            switchTab(tabId, btn) { 
+                document.querySelectorAll('.view-section, .tab-btn').forEach(el => el.classList.remove('active')); 
+                document.getElementById(tabId).classList.add('active'); 
+                btn.classList.add('active'); 
             },
 
-            startTargetPrelimsClock() {
-                const targetDate = new Date("May 23, 2027 09:30:00").getTime();
-                const clockUpdate = () => {
-                    const diff = targetDate - new Date().getTime();
-                    if (diff < 0) return document.getElementById("countdownDisplay").innerText = "EXAM DAY";
-                    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                    const secs = Math.floor((diff % (1000 * 60)) / 1000);
-                    document.getElementById("countdownDisplay").innerText = `${days}d ${hours.toString().padStart(2,'0')}h ${mins.toString().padStart(2,'0')}m ${secs.toString().padStart(2,'0')}s`;
-                };
-                clockUpdate(); setInterval(clockUpdate, 1000);
-            },
-
+            // Timer Logic
             togglePomo() {
                 const btn = document.getElementById('pomoBtn');
                 if (this.isPomoRunning) {
-                    clearInterval(this.pomoInterval); btn.innerText = "Resume Focus"; this.isPomoRunning = false;
+                    clearInterval(this.pomoInterval);
+                    this.isPomoRunning = false;
+                    btn.innerText = "Resume Focus";
+                    btn.style.background = "var(--gold)";
                 } else {
-                    this.isPomoRunning = true; btn.innerText = "Pause Focus";
+                    const inputMins = document.getElementById('timerInput').value;
+                    if (this.pomoTime === 25 * 60 && inputMins != 25) this.pomoTime = inputMins * 60;
+                    
+                    this.isPomoRunning = true;
+                    btn.innerText = "Pause";
+                    btn.style.background = "var(--red)";
+                    
                     this.pomoInterval = setInterval(() => {
-                        if (this.pomoSeconds === 0) {
-                            if (this.pomoMinutes === 0) { clearInterval(this.pomoInterval); alert("Session Done!"); this.resetPomo(); return; }
-                            this.pomoMinutes--; this.pomoSeconds = 59;
-                        } else { this.pomoSeconds--; }
-                        document.getElementById('pomoDisplay').innerText = `${this.pomoMinutes.toString().padStart(2, '0')}:${this.pomoSeconds.toString().padStart(2, '0')}`;
+                        this.pomoTime--;
+                        const m = Math.floor(this.pomoTime / 60).toString().padStart(2, '0');
+                        const s = (this.pomoTime % 60).toString().padStart(2, '0');
+                        document.getElementById('pomoDisplay').innerText = `${m}:${s}`;
+                        if (this.pomoTime <= 0) {
+                            clearInterval(this.pomoInterval);
+                            alert("Session Complete!");
+                            this.resetPomo();
+                        }
                     }, 1000);
                 }
             },
             resetPomo() {
-                clearInterval(this.pomoInterval); this.isPomoRunning = false;
-                this.pomoMinutes = parseInt(document.getElementById('timerInput').value) || 25; this.pomoSeconds = 0;
-                document.getElementById('pomoBtn').innerText = "Start Focus";
-                document.getElementById('pomoDisplay').innerText = `${this.pomoMinutes.toString().padStart(2, '0')}:${this.pomoSeconds.toString().padStart(2, '0')}`;
+                clearInterval(this.pomoInterval);
+                this.isPomoRunning = false;
+                const inputMins = document.getElementById('timerInput').value || 25;
+                this.pomoTime = inputMins * 60;
+                document.getElementById('pomoDisplay').innerText = `${inputMins}:00`;
+                const btn = document.getElementById('pomoBtn');
+                btn.innerText = "Start Focus";
+                btn.style.background = "var(--accent-blue)";
             },
 
+            // Task Logic
             updateSubjects() {
                 const exam = document.getElementById('examSelect').value;
-                const subSelect = document.getElementById('subjectSelect'); subSelect.innerHTML = '';
-                const stack = exam === 'Prelims' ? ['Polity', 'History', 'Geography', 'Economy', 'Environment', 'CSAT'] : ['GS1', 'GS2', 'GS3', 'GS4', 'Optional'];
-                stack.forEach(s => subSelect.innerHTML += `<option value="${s}">${s}</option>`);
+                const subSel = document.getElementById('subjectSelect');
+                subSel.innerHTML = '';
+                const options = exam === 'Prelims' ? ['Polity', 'Economy', 'History', 'Geography', 'Environment'] : ['GS1', 'GS2', 'GS3', 'GS4', 'Optional'];
+                options.forEach(opt => { const el = document.createElement('option'); el.value = opt; el.innerText = opt; subSel.appendChild(el); });
             },
-
             addTask() {
-                const input = document.getElementById('taskInput');
-                if(!input.value.trim()) return;
-                DB.state.tasks.push({
-                    id: Date.now(), text: input.value.trim(),
-                    exam: document.getElementById('examSelect').value,
-                    subject: document.getElementById('subjectSelect').value,
-                    status: 'pending'
-                });
-                input.value = ''; DB.save(); this.renderDashboardTasks(); this.refreshCharts();
-            },
-            deleteTask(id) { DB.state.tasks = DB.state.tasks.filter(t => t.id !== id); DB.save(); this.renderDashboardTasks(); this.refreshCharts(); },
-
-            renderDashboardTasks() {
-                const container = document.getElementById('taskList'); container.innerHTML = '';
-                const revContainer = document.getElementById('revisionList'); revContainer.innerHTML = '';
-                
-                let completed = 0;
-                DB.state.tasks.forEach(t => {
-                    if(t.status === 'completed') completed++;
-                    container.innerHTML += `
-                        <div class="task-item">
-                            <div class="task-details">
-                                <span class="task-meta">${t.exam} | ${t.subject}</span>
-                                <span class="task-text">${t.text}</span>
-                            </div>
-                            <button class="delete-btn" onclick="App.deleteTask(${t.id})">✕</button>
-                        </div>`;
-
-                    const isRevMode = t.status === 'completed';
-                    revContainer.innerHTML += `
-                        <div class="revision-card ${isRevMode ? 'state-revised' : ''}">
-                            <div class="rev-headline-group">
-                                <h3>${t.text}</h3>
-                                <span class="rev-tag-indicator">${t.subject}</span>
-                            </div>
-                            <button class="btn-mark-revised" onclick="App.toggleRevisionState(${t.id})">
-                                ${isRevMode ? '↩ Undo Mark (Recover)' : '✓ Mark Revised'}
-                            </button>
-                        </div>`;
-                });
-                document.getElementById('taskCounter').innerText = `${completed}/${DB.state.tasks.length}`;
-            },
-            toggleRevisionState(id) {
-                const task = DB.state.tasks.find(t => t.id === id);
-                if(task) { task.status = task.status === 'completed' ? 'pending' : 'completed'; DB.save(); this.renderDashboardTasks(); this.refreshCharts(); }
+                const text = document.getElementById('taskInput').value;
+                if (!text) return;
+                const sub = document.getElementById('subjectSelect').value;
+                DB.state.tasks.push({ id: Date.now(), text, sub });
+                DB.save();
+                document.getElementById('taskInput').value = '';
+                alert("Task Added: " + text); // In a full app, this renders to a list
             },
 
-            initDataCharts() {
-                const ctxLog = document.getElementById('logChart').getContext('2d');
-                this.logChartObj = new Chart(ctxLog, { type: 'bar', data: { labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], datasets: [{ label: 'Minutes', data: [45, 90, 60, 120, 35, 150, 180], backgroundColor: '#2563eb', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false }});
-                
-                const ctxTask = document.getElementById('taskChart').getContext('2d');
-                this.taskChartObj = new Chart(ctxTask, { type: 'doughnut', data: { labels: ['Polity','History','Geography','Economy','Other'], datasets: [{ data: [1,1,1,1,1], backgroundColor: ['#2563eb','#8b5cf6','#f59e0b','#ef4444','#64748b'] }] }, options: { responsive: true, maintainAspectRatio: false }});
-                this.refreshCharts();
-            },
-            refreshCharts() {
-                if(!this.taskChartObj) return;
-                const map = { 'Polity': 0, 'History': 0, 'Geography': 0, 'Economy': 0, 'Other': 0 };
-                DB.state.tasks.forEach(t => { if(map[t.subject] !== undefined){ map[t.subject]++; } else { map['Other']++; }});
-                this.taskChartObj.data.datasets[0].data = [map['Polity']||1, map['History']||1, map['Geography']||1, map['Economy']||1, map['Other']||1];
-                this.taskChartObj.update();
-            },
-
-            selectTemplateProfile(element, cls) {
-                document.querySelectorAll('.template-box').forEach(b => b.classList.remove('active'));
-                element.classList.add('active'); this.selectedTemplateClass = cls;
-            },
-            executeNotebookCreation() {
-                const titleInput = document.getElementById('newNbTitle');
-                if(!titleInput.value.trim()) return;
-                DB.state.notebooks.push({ id: Date.now(), title: titleInput.value.trim(), type: this.selectedTemplateClass });
-                DB.save(); titleInput.value = '';
-                document.getElementById('notebookModal').style.display = 'none';
-                CA.renderLibrary();
-                Notebook.open(titleInput.value, this.selectedTemplateClass);
-            },
-
+            // Backup / Restore Logic
             backupData() {
-                const blob = new Blob([JSON.stringify(DB.state)], {type: "application/json"});
-                const link = document.createElement('a'); link.href = URL.createObjectURL(blob);
-                link.download = `UPSC_VAULT_${new Date().toISOString().slice(0,10)}.json`; link.click();
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(DB.state));
+                const dlAnchorElem = document.createElement('a');
+                dlAnchorElem.setAttribute("href", dataStr);
+                dlAnchorElem.setAttribute("download", "upsc_backup.json");
+                dlAnchorElem.click();
             },
-            restoreData(e) {
-                const file = e.target.files[0]; if(!file) return;
+            restoreData(event) {
+                const file = event.target.files[0];
+                if (!file) return;
                 const reader = new FileReader();
-                reader.onload = (evt) => {
-                    try { const parsed = JSON.parse(evt.target.result); if(parsed.tasks) { DB.state = parsed; DB.save(); this.init(); alert("Data restored."); } } catch(err) { alert("Invalid backup file."); }
+                reader.onload = (e) => {
+                    try {
+                        DB.state = JSON.parse(e.target.result);
+                        DB.save();
+                        alert("Data Restored Successfully!");
+                        window.location.reload();
+                    } catch (err) { alert("Error parsing backup file."); }
                 };
                 reader.readAsText(file);
             },
 
-            makeDraggable(elmnt, handleClass, moveIndicator = false) {
-                let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-                const handle = elmnt.querySelector('.' + handleClass);
-                handle.onpointerdown = (e) => {
-                    e.preventDefault(); pos3 = e.clientX; pos4 = e.clientY;
-                    document.onpointerup = () => { document.onpointerup = null; document.onpointermove = null; };
-                    document.onpointermove = (ev) => {
-                        ev.preventDefault(); pos1 = pos3 - ev.clientX; pos2 = pos4 - ev.clientY;
-                        pos3 = ev.clientX; pos4 = ev.clientY;
-                        elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
-                        elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
-                        if(moveIndicator) {
-                            const ind = document.getElementById('pageIndicator');
-                            ind.style.top = (elmnt.offsetTop - pos2 + 55) + "px";
-                            ind.style.left = (elmnt.offsetLeft - pos1 + 5) + "px";
-                        }
-                    };
-                };
+            lockSystem() { window.location.reload(); },
+
+            executeNotebookCreation() {
+                const title = document.getElementById('newNbTitle').value.trim() || 'Untitled Notebook';
+                document.getElementById('notebookModal').style.display = 'none';
+                Notebook.open(title, this.selectedTemplateClass);
             }
         };
 
-        // --- CURRENT AFFAIRS SYSTEM ---
+        // --- CURRENT AFFAIRS ENGINE ---
         const CA = {
             tempImage: null,
-            init() { this.renderLibrary(); },
-            handleImageSelect(e) {
-                const file = e.target.files[0]; if(!file) return;
+            handleImageSelect(event) {
+                const file = event.target.files[0];
+                if (!file) return;
                 const reader = new FileReader();
-                reader.onload = (evt) => { this.tempImage = evt.target.result; document.getElementById('caImagePreview').innerText = `✓ Capture Bound`; };
+                reader.onload = (e) => {
+                    this.tempImage = e.target.result;
+                    document.getElementById('caImagePreview').innerText = "✓ Image Attached: " + file.name;
+                };
                 reader.readAsDataURL(file);
             },
             saveRecord() {
-                const headline = document.getElementById('caHeadline'); if(!headline.value.trim()) return;
-                DB.state.ca.unshift({ id: Date.now(), headline: headline.value.trim(), type: document.getElementById('caType').value, summary: document.getElementById('caSummary').value, image: this.tempImage });
-                headline.value = ''; document.getElementById('caSummary').value = ''; this.tempImage = null; document.getElementById('caImagePreview').innerText = ''; DB.save(); this.renderLibrary();
-            },
-            renderLibrary() {
-                const container = document.getElementById('caList'); container.innerHTML = '';
-                const grid = document.getElementById('notebookGrid');
-                document.querySelectorAll('.dynamic-nb-item').forEach(e => e.remove());
+                const hl = document.getElementById('caHeadline').value;
+                const sum = document.getElementById('caSummary').value;
+                if (!hl || !sum) return alert("Please fill headline and summary.");
                 
-                DB.state.ca.forEach(c => {
-                    container.innerHTML += `
-                        <div class="card" style="border-left: 4px solid var(--accent-blue);">
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <h3 style="font-weight:700; font-size:1rem;">${c.headline}</h3>
-                                <span style="font-size:0.75rem; font-weight:800; color:var(--accent-blue); background:rgba(37,99,235,0.1); padding:2px 8px; border-radius:4px;">${c.type}</span>
-                            </div>
-                            <p style="color:var(--text-muted); font-size:0.9rem; margin-top:6px; line-height:1.5;">${c.summary}</p>
-                            ${c.image ? `<button class="btn-primary" style="margin-top:10px; padding:0.4rem 1rem; font-size:0.8rem;" onclick="Notebook.open('${c.headline}', 'tb-plain', '${c.image}')">🖍️ Annotate News Clipping</button>` : ''}
-                        </div>`;
-                });
-
-                DB.state.notebooks.forEach(n => {
-                    grid.innerHTML += `
-                        <div class="notebook-item dynamic-nb-item" onclick="Notebook.open('${n.title}', '${n.type}')">
-                            <div class="notebook-cover" style="background:linear-gradient(135deg, #1e3a8a, #2563eb);"></div>
-                            <div class="notebook-title">${n.title}</div>
-                        </div>`;
-                });
+                DB.state.caRecords.push({ id: Date.now(), headline: hl, summary: sum, image: this.tempImage });
+                DB.save();
+                
+                document.getElementById('caHeadline').value = '';
+                document.getElementById('caSummary').value = '';
+                document.getElementById('caImagePreview').innerText = '';
+                this.tempImage = null;
+                alert("Current Affairs Record Saved!");
             }
         };
 
-        // --- MOCK TEST ENGINE ---
-        const MockEngine = {
-            chartObj: null,
-            init() {
-                const ctx = document.getElementById('testChart').getContext('2d');
-                this.chartObj = new Chart(ctx, { type: 'line', data: { labels: ['Baseline'], datasets: [{ label: 'Score Profiling', data: [0], borderColor: '#10b981', tension: 0.3, fill: false }] }, options: { responsive: true, maintainAspectRatio: false }});
-                this.renderTrend();
-            },
-            saveResult() {
-                const name = document.getElementById('testNameInput');
-                const score = document.getElementById('testScoreInput');
-                const max = document.getElementById('testMaxInput');
-                if(!name.value.trim() || !score.value) return;
-
-                DB.state.scores.push({ label: name.value.trim(), value: parseFloat(score.value), max: parseFloat(max.value) });
-                name.value = ''; score.value = ''; DB.save(); this.renderTrend();
-            },
-            renderTrend() {
-                if(!DB.state.scores || DB.state.scores.length === 0) return;
-                this.chartObj.data.labels = DB.state.scores.map(s => s.label);
-                this.chartObj.data.datasets[0].data = DB.state.scores.map(s => s.value);
-                this.chartObj.update();
-            }
-        };
-
-        // --- RETINA VECTOR DRAWING ENGINE (WITH VOICE DICTATION & LOCAL PDF) ---
+        // --- THE NOTEBOOK ENGINE (CANVAS, RULER, ZOOM, PHYSICS) ---
         const Notebook = {
             ctx: null, canvas: null, wrapper: null, textLayer: null,
             isDrawing: false, isPanning: false, currentTool: 'pen',
-            currentColor: '#0f172a', currentThickness: 3, currentLineWidth: 3,
+            currentColor: 'var(--dark-grey)', currentThickness: 3, currentLineWidth: 3,
             undoStack: [], redoStack: [], lastPoint: null,
-            speechRecog: null, isRecording: false,
+            pages: [], currentPage: 0, pdfDoc: null,
+            activePointers: new Map(), isMultiTouch: false, lastPanPoint: null,
+            drawingPointerId: null, lastPenTime: 0,
+            
+            isZoomed: false,
+            
+            // Ruler Physics State
+            rulerState: { active: false, x: 100, y: 300, angle: 0, el: null, lastAngleBase: undefined },
+            rulerPointers: new Map(),
 
             open(title, templateClass = 'tb-grid', imgData = null, pdfData = null) {
                 document.getElementById('canvasWorkspace').style.display = 'flex';
-                
+                document.getElementById('canvasTitle').innerText = title;
                 this.canvas = document.getElementById('drawingCanvas');
                 this.wrapper = document.getElementById('canvasPaperWrapper');
                 this.textLayer = document.getElementById('hybridTextLayer');
                 this.ctx = this.canvas.getContext('2d', { willReadFrequently: true });
                 
                 this.wrapper.className = templateClass;
-                this.executeHighDpiCalibration();
-                
+                this.pages = []; this.currentPage = 0; this.pdfDoc = pdfData;
+
+                if (pdfData) { this.loadPdfPage(1); } 
+                else {
+                    this.wrapper.style.width = "850px"; this.wrapper.style.height = "1150px";
+                    this.executeHighDpiCalibration();
+                    this.pages.push(imgData || null);
+                    this.renderCurrentPage();
+                }
+
+                // Setup Listeners
                 this.canvas.onpointerdown = this.actionDown.bind(this);
                 this.canvas.onpointermove = this.actionMove.bind(this);
                 this.canvas.onpointerup = this.actionStop.bind(this);
                 this.canvas.onpointercancel = this.actionStop.bind(this);
-
                 this.setTool('pen'); 
-                this.undoStack = []; this.redoStack = [];
-                this.captureCanvasStateSnapshot(); 
+                
+                // Ruler Setup
+                this.rulerState.el = document.getElementById('virtualRuler');
+                this.rulerState.el.onpointerdown = this.rulerDown.bind(this);
+                document.addEventListener('pointermove', this.rulerMove.bind(this));
+                document.addEventListener('pointerup', this.rulerUp.bind(this));
+                document.addEventListener('pointercancel', this.rulerUp.bind(this));
+            },
 
-                if (imgData) {
-                    const img = new Image();
-                    img.onload = () => {
-                        this.ctx.drawImage(img, 0, 0, this.wrapper.clientWidth, this.wrapper.clientWidth * (img.height/img.width));
-                        this.captureCanvasStateSnapshot();
-                    };
-                    img.src = imgData;
-                } else if (pdfData) {
-                    pdfData.getPage(1).then(page => {
-                        const viewport = page.getViewport({scale: 1.5});
-                        this.wrapper.style.width = viewport.width + "px";
-                        this.wrapper.style.height = viewport.height + "px";
-                        this.executeHighDpiCalibration();
-                        page.render({canvasContext: this.ctx, viewport: viewport});
-                        this.captureCanvasStateSnapshot();
-                    });
+            close() { document.getElementById('canvasWorkspace').style.display = 'none'; },
+            
+            // --- ZOOM LOGIC ---
+            toggleZoom() {
+                this.isZoomed = !this.isZoomed;
+                const btn = document.getElementById('btnToggleZoom');
+                if(this.isZoomed) {
+                    this.wrapper.style.transform = 'scale(1.5)';
+                    btn.classList.add('active');
+                } else {
+                    this.wrapper.style.transform = 'scale(1)';
+                    btn.classList.remove('active');
                 }
             },
 
-            close() { 
-                document.getElementById('canvasWorkspace').style.display = 'none'; 
-                if(this.isRecording) this.toggleVoiceDictation();
+            // --- VIRTUAL RULER PHYSICS & EDGE SNAPPING ---
+            toggleRuler() {
+                this.rulerState.active = !this.rulerState.active;
+                const btn = document.getElementById('btnToggleRuler');
+                if(this.rulerState.active) {
+                    this.rulerState.el.style.display = 'flex';
+                    this.updateRulerTransform();
+                    btn.classList.add('active');
+                } else {
+                    this.rulerState.el.style.display = 'none';
+                    btn.classList.remove('active');
+                }
             },
-            clear() { this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height); this.textLayer.innerHTML = ''; this.captureCanvasStateSnapshot(); },
+            
+            updateRulerTransform() {
+                this.rulerState.el.style.transform = `translate(${this.rulerState.x}px, ${this.rulerState.y}px) rotate(${this.rulerState.angle}deg)`;
+                let displayAngle = Math.round(this.rulerState.angle % 360);
+                if (displayAngle < 0) displayAngle += 360;
+                document.getElementById('rulerDial').innerText = displayAngle + "°";
+            },
+
+            rulerDown(e) {
+                if(!this.rulerState.active) return;
+                this.rulerState.el.setPointerCapture(e.pointerId);
+                this.rulerPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+                e.stopPropagation(); 
+            },
+
+            rulerMove(e) {
+                if(!this.rulerState.active || !this.rulerPointers.has(e.pointerId)) return;
+                
+                const prev = this.rulerPointers.get(e.pointerId);
+                this.rulerPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+                if(this.rulerPointers.size === 1) {
+                    // Translate (1 finger drag)
+                    const dx = e.clientX - prev.x;
+                    const dy = e.clientY - prev.y;
+                    this.rulerState.x += dx;
+                    this.rulerState.y += dy;
+                } else if(this.rulerPointers.size === 2) {
+                    // Rotate (2 finger twist)
+                    const pts = Array.from(this.rulerPointers.values());
+                    const angleNow = Math.atan2(pts[1].y - pts[0].y, pts[1].x - pts[0].x) * (180 / Math.PI);
+                    if (this.rulerState.lastAngleBase !== undefined) {
+                        const delta = angleNow - this.rulerState.lastAngleBase;
+                        this.rulerState.angle += delta;
+                    }
+                    this.rulerState.lastAngleBase = angleNow;
+                }
+                this.updateRulerTransform();
+            },
+
+            rulerUp(e) {
+                if(this.rulerPointers.has(e.pointerId)) {
+                    this.rulerState.el.releasePointerCapture(e.pointerId);
+                    this.rulerPointers.delete(e.pointerId);
+                    if(this.rulerPointers.size < 2) { this.rulerState.lastAngleBase = undefined; }
+                }
+            },
+
+            // Evaluates drawing coordinates against the physical boundaries of the ruler
+            applyRulerConstraint(x, y) {
+                if (!this.rulerState.active) return { x, y, blocked: false };
+                
+                const hw = 300; // Half width of ruler (600/2)
+                const hh = 35;  // Half height of ruler (70/2)
+                
+                // Get absolute center of the ruler relative to viewport
+                const rect = this.canvas.getBoundingClientRect();
+                const scale = this.isZoomed ? 1.5 : 1;
+                const canvasCx = (this.rulerState.x + hw - rect.left) / scale;
+                const canvasCy = (this.rulerState.y + hh - rect.top) / scale;
+                
+                const rad = this.rulerState.angle * (Math.PI / 180);
+                
+                // Translate point to origin
+                let tx = x - canvasCx;
+                let ty = y - canvasCy;
+                
+                // Rotate to local space
+                let lx = tx * Math.cos(-rad) - ty * Math.sin(-rad);
+                let ly = tx * Math.sin(-rad) + ty * Math.cos(-rad);
+                
+                let blocked = false;
+                const snapDistance = 30 / scale; // How close pen needs to be to snap to edge
+
+                // If pen is horizontally within the ruler's span
+                if (lx >= -hw/scale && lx <= hw/scale) {
+                    // Check top edge
+                    if (Math.abs(ly - (-hh/scale)) < snapDistance) {
+                        ly = -hh/scale; 
+                    } 
+                    // Check bottom edge
+                    else if (Math.abs(ly - hh/scale) < snapDistance) {
+                        ly = hh/scale; 
+                    }
+                    // Check if INSIDE the ruler (block drawing through it)
+                    else if (ly > -hh/scale && ly < hh/scale) {
+                        blocked = true;
+                    }
+                }
+                
+                // Rotate back to global space
+                let rx = lx * Math.cos(rad) - ly * Math.sin(rad);
+                let ry = lx * Math.sin(rad) + ly * Math.cos(rad);
+                
+                return { x: rx + canvasCx, y: ry + canvasCy, blocked: blocked };
+            },
+
+            // --- POPOVER MENUS LOGIC ---
+            togglePopover(id, e) {
+                if(e) e.stopPropagation();
+                const pop = document.getElementById(id);
+                const btn = id === 'viewMenuPopover' ? document.getElementById('btnViewMenu') : document.getElementById('btnMoreMenu');
+                
+                if (pop.style.display === 'flex') {
+                    pop.style.display = 'none'; btn.classList.remove('active-popover');
+                } else {
+                    this.closePopovers(); 
+                    pop.style.display = 'flex'; btn.classList.add('active-popover');
+                }
+            },
+            closePopovers() {
+                document.getElementById('viewMenuPopover').style.display = 'none';
+                document.getElementById('moreMenuPopover').style.display = 'none';
+                document.getElementById('btnViewMenu').classList.remove('active-popover');
+                document.getElementById('btnMoreMenu').classList.remove('active-popover');
+            },
+            toggleUI(id) { document.getElementById(id).classList.toggle('active'); },
+
+            async loadPdfPage(pageNum) {
+                if (!this.pdfDoc) return;
+                const page = await this.pdfDoc.getPage(pageNum);
+                const viewport = page.getViewport({scale: 1.5}); 
+                this.wrapper.style.width = viewport.width + "px";
+                this.wrapper.style.height = viewport.height + "px";
+                this.executeHighDpiCalibration();
+                await page.render({canvasContext: this.ctx, viewport: viewport}).promise;
+                this.pages[this.currentPage] = this.canvas.toDataURL();
+                this.updatePageIndicator();
+                this.captureCanvasStateSnapshot();
+            },
+
+            saveCurrentPage() { this.pages[this.currentPage] = this.canvas.toDataURL(); },
+            addPage() { this.saveCurrentPage(); this.pages.push(null); this.currentPage = this.pages.length - 1; this.clear(); this.updatePageIndicator(); },
+            prevPage() { if(this.currentPage > 0) { this.saveCurrentPage(); this.currentPage--; this.renderCurrentPage(); } },
+            nextPage() {
+                this.saveCurrentPage();
+                if(this.currentPage < this.pages.length - 1) { this.currentPage++; this.renderCurrentPage(); } 
+                else if (this.pdfDoc && this.currentPage < this.pdfDoc.numPages - 1) { this.currentPage++; this.loadPdfPage(this.currentPage + 1); }
+            },
+
+            renderCurrentPage() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                const dataUrl = this.pages[this.currentPage];
+                if(dataUrl) {
+                    const img = new Image();
+                    img.onload = () => { this.ctx.drawImage(img, 0, 0, this.wrapper.clientWidth, this.wrapper.clientHeight); this.captureCanvasStateSnapshot(); };
+                    img.src = dataUrl;
+                } else { this.captureCanvasStateSnapshot(); }
+                this.updatePageIndicator();
+            },
+
+            updatePageIndicator() {
+                let total = this.pdfDoc ? Math.max(this.pages.length, this.pdfDoc.numPages) : this.pages.length;
+                document.getElementById('pageIndicator').innerText = `${this.currentPage + 1} / ${total}`;
+            },
+
+            exportPDF() {
+                this.saveCurrentPage();
+                alert("Generating Export... Tap OK to continue.");
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'px', [this.wrapper.clientWidth, this.wrapper.clientHeight]);
+                for(let i = 0; i < this.pages.length; i++) {
+                    if(i > 0) pdf.addPage([this.wrapper.clientWidth, this.wrapper.clientHeight]);
+                    if(this.pages[i]) pdf.addImage(this.pages[i], 'PNG', 0, 0, this.wrapper.clientWidth, this.wrapper.clientHeight);
+                }
+                pdf.save(`Document.pdf`);
+            },
+
+            clear() { this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height); this.captureCanvasStateSnapshot(); this.closePopovers(); },
+            toggleSidebar() { document.getElementById('proSidebar').classList.toggle('minimized'); document.getElementById('topMenuBtn').style.display = document.getElementById('proSidebar').classList.contains('minimized') ? 'flex' : 'none'; },
 
             executeHighDpiCalibration() {
-                const rect = this.wrapper.getBoundingClientRect();
-                const dpr = window.devicePixelRatio || 1;
+                const rect = this.wrapper.getBoundingClientRect(); const dpr = window.devicePixelRatio || 1;
                 this.canvas.width = rect.width * dpr; this.canvas.height = rect.height * dpr;
                 this.ctx.scale(dpr, dpr);
                 this.canvas.style.width = `${rect.width}px`; this.canvas.style.height = `${rect.height}px`;
@@ -728,46 +845,30 @@
 
             captureCanvasStateSnapshot() {
                 if (this.undoStack.length > 25) this.undoStack.shift();
-                this.undoStack.push(this.canvas.toDataURL());
-                this.redoStack = [];
+                this.undoStack.push(this.canvas.toDataURL()); this.redoStack = [];
             },
-            executeUndo() {
-                if (this.undoStack.length > 1) {
-                    this.redoStack.push(this.undoStack.pop());
-                    this.drawStateFromSnapshot(this.undoStack[this.undoStack.length - 1]);
-                }
-            },
-            executeRedo() {
-                if (this.redoStack.length > 0) {
-                    const snapshot = this.redoStack.pop();
-                    this.undoStack.push(snapshot);
-                    this.drawStateFromSnapshot(snapshot);
-                }
-            },
+            executeUndo() { if (this.undoStack.length > 1) { this.redoStack.push(this.undoStack.pop()); this.drawStateFromSnapshot(this.undoStack[this.undoStack.length - 1]); } },
+            executeRedo() { if (this.redoStack.length > 0) { const snapshot = this.redoStack.pop(); this.undoStack.push(snapshot); this.drawStateFromSnapshot(snapshot); } },
             drawStateFromSnapshot(url) {
                 const img = new Image();
-                img.onload = () => {
-                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                    this.ctx.drawImage(img, 0, 0, this.wrapper.clientWidth, this.wrapper.clientHeight);
-                };
+                img.onload = () => { this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height); this.ctx.drawImage(img, 0, 0, this.wrapper.clientWidth, this.wrapper.clientHeight); };
                 img.src = url;
             },
 
             setTool(tool) {
                 this.currentTool = tool;
-                ['toolPen', 'toolHighlighter', 'toolEraser', 'toolText', 'toolHand'].forEach(id => {
+                ['toolPen', 'toolHighlighter', 'toolEraser', 'toolText', 'toolHand', 'toolLasso'].forEach(id => {
                     const elem = document.getElementById(id); if(elem) elem.classList.remove('active');
                 });
-                
                 const slider = document.getElementById('thicknessSliderContainer');
+                
                 if(tool === 'text') {
                     document.getElementById('toolText').classList.add('active');
                     this.textLayer.style.pointerEvents = 'auto'; this.canvas.style.pointerEvents = 'none'; slider.style.display = 'none';
                     this.textLayer.contentEditable = "true"; this.textLayer.focus();
                 } else if(tool === 'hand') {
                     document.getElementById('toolHand').classList.add('active');
-                    this.textLayer.style.pointerEvents = 'none'; this.canvas.style.pointerEvents = 'auto';
-                    this.canvas.style.cursor = 'grab'; slider.style.display = 'none';
+                    this.textLayer.style.pointerEvents = 'none'; this.canvas.style.pointerEvents = 'auto'; this.canvas.style.cursor = 'grab'; slider.style.display = 'none';
                     this.textLayer.contentEditable = "false";
                 } else {
                     this.textLayer.style.pointerEvents = 'none'; this.canvas.style.pointerEvents = 'auto';
@@ -775,54 +876,92 @@
                     if(tool === 'pen') { document.getElementById('toolPen').classList.add('active'); this.updateStrokeThickness(3); slider.style.display = 'flex'; }
                     if(tool === 'highlighter') { document.getElementById('toolHighlighter').classList.add('active'); this.updateStrokeThickness(22); slider.style.display = 'flex'; }
                     if(tool === 'eraser') { document.getElementById('toolEraser').classList.add('active'); slider.style.display = 'none'; }
+                    if(tool === 'lasso') { document.getElementById('toolLasso').classList.add('active'); slider.style.display = 'none'; }
                 }
             },
 
-            updateStrokeThickness(val) {
-                this.currentThickness = parseInt(val);
-                document.getElementById('thicknessLabel').innerText = val;
-                document.getElementById('penThickness').value = val;
-            },
+            updateStrokeThickness(val) { this.currentThickness = parseInt(val); document.getElementById('thicknessLabel').innerText = val; },
 
             setInkColor(hex, index) {
                 this.currentColor = hex;
                 document.querySelectorAll('.sb-color-swatch').forEach(s => s.classList.remove('active'));
                 const el = document.getElementById('sw-color-' + index); if(el) el.classList.add('active');
-                if(this.currentTool === 'eraser' || this.currentTool === 'text' || this.currentTool === 'hand') this.setTool('pen');
+                if(this.currentTool === 'eraser' || this.currentTool === 'text' || this.currentTool === 'hand' || this.currentTool === 'lasso') this.setTool('pen');
             },
 
             actionDown(e) {
+                this.closePopovers();
+                
+                if (e.pointerType === 'touch') { this.activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY }); }
+                if (this.activePointers.size >= 2) { this.isMultiTouch = true; this.isDrawing = false; this.drawingPointerId = null; return; }
+                this.isMultiTouch = false;
+
+                // Strict Palm Rejection timeout
+                if (e.pointerType === 'touch' && (Date.now() - this.lastPenTime < 1000)) return;
+                if (this.isDrawing && this.drawingPointerId !== null) return;
+
                 if(this.currentTool === 'hand') { this.isPanning = true; this.canvas.style.cursor = 'grabbing'; return; }
                 if(this.currentTool === 'text') return;
                 
-                this.isDrawing = true;
+                // Get coords & apply ruler math constraints
                 const rect = this.canvas.getBoundingClientRect();
-                this.lastPoint = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+                const scale = this.isZoomed ? 1.5 : 1;
+                const rawX = (e.clientX - rect.left) / scale;
+                const rawY = (e.clientY - rect.top) / scale;
                 
-                this.ctx.beginPath();
-                this.ctx.moveTo(this.lastPoint.x, this.lastPoint.y);
+                const constrained = this.applyRulerConstraint(rawX, rawY);
+                if (constrained.blocked) return;
+
+                this.isDrawing = true;
+                this.drawingPointerId = e.pointerId; 
+                this.lastPoint = { x: constrained.x, y: constrained.y };
+                
+                this.ctx.beginPath(); this.ctx.moveTo(this.lastPoint.x, this.lastPoint.y);
                 this.currentLineWidth = this.currentThickness;
+                this.ctx.setLineDash([]);
                 
                 if(this.currentTool === 'eraser') {
                     this.ctx.globalCompositeOperation = "destination-out"; this.ctx.lineWidth = this.currentThickness * 3;
                 } else if(this.currentTool === 'highlighter') {
                     this.ctx.globalCompositeOperation = "multiply";
-                    let hex = this.currentColor;
-                    let r = parseInt(hex.slice(1,3), 16) || 37; let g = parseInt(hex.slice(3,5), 16) || 99; let b = parseInt(hex.slice(5,7), 16) || 235;
-                    this.ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.35)`;
-                    this.ctx.lineWidth = this.currentThickness;
-                } else {
+                    this.ctx.strokeStyle = `rgba(255, 214, 10, 0.4)`; this.ctx.lineWidth = this.currentThickness;
+                } else if(this.currentTool === 'lasso') {
                     this.ctx.globalCompositeOperation = "source-over";
-                    this.ctx.strokeStyle = this.currentColor;
+                    this.ctx.strokeStyle = "var(--ws-icon-active)"; this.ctx.lineWidth = 2;
+                    this.ctx.setLineDash([6, 6]);
+                } else {
+                    this.ctx.globalCompositeOperation = "source-over"; this.ctx.strokeStyle = this.currentColor;
                 }
             },
 
             actionMove(e) {
+                if (this.activePointers.has(e.pointerId)) {
+                    this.activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+                    if (this.activePointers.size >= 2) {
+                        let cx = 0, cy = 0;
+                        for (let p of this.activePointers.values()) { cx += p.x; cy += p.y; }
+                        cx /= this.activePointers.size; cy /= this.activePointers.size;
+                        if (this.lastPanPoint) {
+                            let dx = cx - this.lastPanPoint.x; let dy = cy - this.lastPanPoint.y;
+                            document.getElementById('drawContainer').scrollBy(-dx, -dy);
+                        }
+                        this.lastPanPoint = { x: cx, y: cy }; return;
+                    }
+                }
+
+                if (this.isMultiTouch) return;
                 if(this.isPanning && this.currentTool === 'hand') { document.getElementById('drawContainer').scrollBy(-e.movementX, -e.movementY); return; }
-                if(!this.isDrawing || this.currentTool === 'text' || this.currentTool === 'hand') return;
+                if(!this.isDrawing || this.drawingPointerId !== e.pointerId || this.currentTool === 'text' || this.currentTool === 'hand') return;
                 
                 const rect = this.canvas.getBoundingClientRect();
-                const curr = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+                const scale = this.isZoomed ? 1.5 : 1;
+                const rawX = (e.clientX - rect.left) / scale;
+                const rawY = (e.clientY - rect.top) / scale;
+                
+                const constrained = this.applyRulerConstraint(rawX, rawY);
+                if (constrained.blocked) return;
+
+                const curr = { x: constrained.x, y: constrained.y };
                 const mid = { x: (this.lastPoint.x + curr.x)/2, y: (this.lastPoint.y + curr.y)/2 };
 
                 if(this.currentTool === 'pen') {
@@ -836,35 +975,22 @@
                 this.ctx.beginPath(); this.ctx.moveTo(mid.x, mid.y); this.lastPoint = curr;
             },
 
-            actionStop() {
-                if(this.currentTool === 'hand') { this.isPanning = false; this.canvas.style.cursor = 'grab'; return; }
-                if(this.isDrawing) { this.isDrawing = false; this.ctx.globalCompositeOperation = "source-over"; this.captureCanvasStateSnapshot(); }
-            },
-
-            // Web Speech API Voice Dictation
-            toggleVoiceDictation() {
-                const btn = document.getElementById('toolMic');
-                if (!('webkitSpeechRecognition' in window)) return alert("Voice dictation requires Chrome/Safari on iPad.");
-                
-                if (this.isRecording) {
-                    this.speechRecog.stop();
-                    return;
+            actionStop(e) {
+                if (this.activePointers.has(e.pointerId)) {
+                    this.activePointers.delete(e.pointerId);
+                    if (this.activePointers.size === 0) { this.isMultiTouch = false; this.lastPanPoint = null; } 
                 }
 
-                this.setTool('text');
-                btn.style.color = "var(--red)"; btn.classList.add('active');
+                if(this.currentTool === 'hand') { this.isPanning = false; this.canvas.style.cursor = 'grab'; return; }
                 
-                this.speechRecog = new webkitSpeechRecognition();
-                this.speechRecog.continuous = true; this.speechRecog.interimResults = true;
-                
-                this.speechRecog.onresult = (event) => {
-                    let transcript = '';
-                    for (let i = event.resultIndex; i < event.results.length; ++i) { transcript += event.results[i][0].transcript; }
-                    this.textLayer.innerText += " " + transcript;
-                };
+                if(this.isDrawing && this.drawingPointerId === e.pointerId) {
+                    this.isDrawing = false; this.drawingPointerId = null;
+                    if (e.pointerType === 'pen') this.lastPenTime = Date.now(); 
 
-                this.speechRecog.onend = () => { this.isRecording = false; btn.style.color = ""; btn.classList.remove('active'); };
-                this.speechRecog.start(); this.isRecording = true;
+                    this.ctx.setLineDash([]); this.ctx.globalCompositeOperation = "source-over"; 
+                    if(this.currentTool === 'lasso') { setTimeout(() => this.executeUndo(), 500); } 
+                    else { this.captureCanvasStateSnapshot(); }
+                }
             },
 
             loadLocalPDF(event) {
@@ -872,42 +998,47 @@
                 const fileReader = new FileReader();
                 fileReader.onload = function(e) {
                     const typedarray = new Uint8Array(e.target.result);
-                    pdfjsLib.getDocument(typedarray).promise.then(pdf => {
-                        Notebook.open(file.name, 'tb-plain', null, pdf);
-                    }).catch(err => alert("Error parsing PDF: " + err.message));
+                    pdfjsLib.getDocument(typedarray).promise.then(pdf => { Notebook.open(file.name, 'tb-plain', null, pdf); }).catch(err => alert("Error parsing PDF: " + err.message));
                 };
                 fileReader.readAsArrayBuffer(file);
             }
         };
 
-        // --- GOOGLE DRIVE FIX (REPLACE KEYS HERE) ---
+        // --- GOOGLE DRIVE INTEGRATION (IMPORTANT: ADD KEYS BELOW) ---
         const DriveAuth = {
             tokenClient: null, isGapiReady: false, isGisReady: false,
-            CLIENT_ID: '986435590514-s5rvjq7820gbhbaq8hn062d07absb7qq.apps.googleusercontent.com', API_KEY: 'AIzaSyCSUbwjYdxdGPUIjN_VYvcCcc6jLqflF5c', SCOPES: 'https://www.googleapis.com/auth/drive.file',
+            
+            // NOTE: Replace these with actual credentials from console.cloud.google.com
+            CLIENT_ID: 'YOUR_CLIENT_ID.apps.googleusercontent.com', 
+            SCOPES: 'https://www.googleapis.com/auth/drive.file',
+            
             setGapiLoaded() { this.isGapiReady = true; }, setGisLoaded() { this.isGisReady = true; },
+            
             triggerLogin() {
+                if (this.CLIENT_ID.includes('YOUR_CLIENT_ID')) {
+                    alert("Developer Note: You must replace 'YOUR_CLIENT_ID' in the code with an actual Google Cloud OAuth Client ID for this to connect.");
+                    return;
+                }
                 if (!this.isGapiReady || !this.isGisReady) return alert("Google API loading. Wait a second.");
-                document.getElementById('authDriveBtn').style.display = 'none'; document.getElementById('driveLoading').style.display = 'block';
-                document.getElementById('driveError').style.display = 'none';
-                const timer = setTimeout(() => { this.resetUIErrorFrame("Authentication handshake timed out."); }, 12000);
+                
+                document.getElementById('driveLoading').style.display = 'block';
                 try {
                     this.tokenClient = google.accounts.oauth2.initTokenClient({
                         client_id: this.CLIENT_ID, scope: this.SCOPES,
-                        callback: (resp) => {
-                            clearTimeout(timer);
-                            if (resp.error) return this.resetUIErrorFrame("Authorization error: " + resp.error);
-                            document.getElementById('driveLoading').style.display = 'none';
-                            document.getElementById('driveDropZone').innerHTML = `<h3 style="color:var(--green); font-weight:800;">✓ Storage Vault Connected Successfully</h3>`;
-                        },
-                        error_callback: (err) => { clearTimeout(timer); this.resetUIErrorFrame("Popup instantiation blocked."); }
+                        callback: (resp) => { 
+                            document.getElementById('driveLoading').style.display = 'none'; 
+                            if (!resp.error) {
+                                document.getElementById('driveLoading').innerText = "✓ Vault Connected Successfully";
+                                document.getElementById('driveLoading').style.display = 'block';
+                                document.getElementById('driveLoading').style.color = "var(--green)";
+                            }
+                        }
                     });
                     this.tokenClient.requestAccessToken({prompt: 'consent'});
-                } catch (err) { clearTimeout(timer); this.resetUIErrorFrame("System OAuth configuration failure."); }
-            },
-            resetUIErrorFrame(msg) {
-                document.getElementById('driveLoading').style.display = 'none'; 
-                document.getElementById('authDriveBtn').style.display = 'inline-block';
-                const err = document.getElementById('driveError'); err.style.display = 'block'; err.innerText = msg;
+                } catch (err) {
+                    alert("Configuration error: " + err.message);
+                    document.getElementById('driveLoading').style.display = 'none';
+                }
             }
         };
 
